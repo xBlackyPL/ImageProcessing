@@ -10,11 +10,11 @@
     <Grid>
         <Menu Height="20" VerticalAlignment="Top">
             <MenuItem Header="_Image">
-                <MenuItem Header="_Load image..." />
-                <MenuItem Header="_Recently opened image" IsEnabled="False"/>
-                <MenuItem Header="_Save image as..." />
+                <MenuItem Header="_Load image..." Click="LoadFile_MenuItemClick"/>
+                <MenuItem x:Name="RecentlyOpenedMenuItem" Header="_Recently opened image" IsEnabled="False"/>
+                <MenuItem x:Name="SaveImageMenuItem" Header="_Save image as..." IsEnabled="False" Click="SaveImage_MenuItemClick"/>
                 <Separator />
-                <MenuItem Header="_Exit" />
+                <MenuItem Header="_Exit" Click="Exit_MenuItemClick"/>
             </MenuItem>
 
         </Menu>
@@ -23,12 +23,12 @@
                 <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" Width="150" Height="300" VerticalAlignment="Top">
                     <StackPanel>
                         <ComboBox Height="30" Margin="5,5,5,5" VerticalAlignment="Top"/>
-                        <Button x:Name="Apply" Height="30" Margin="5,220,5,5" VerticalAlignment="Bottom">
+                        <Button x:Name="Apply" Height="30" Margin="5,220,5,5" VerticalAlignment="Bottom" IsEnabled="False">
                             Apply
                         </Button>
                     </StackPanel>
                 </Border>
-                <Image x:Name="Img"  VerticalAlignment="Top"/>
+                <Image x:Name="Img"  VerticalAlignment="Top" Margin="5,0,0,0"/>
 
             </DockPanel>
         </Border>

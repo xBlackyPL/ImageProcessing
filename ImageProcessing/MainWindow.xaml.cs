@@ -18,7 +18,6 @@ namespace ImageProcessing
         public MainWindow()
         {
             InitializeComponent();
-            
         }
 
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -135,7 +134,6 @@ namespace ImageProcessing
             {
                 var encoder = new PngBitmapEncoder();
 
-                BitmapImage bitmapSource;
                 using (MemoryStream outStream = new MemoryStream())
                 {
                     BitmapEncoder enc = new BmpBitmapEncoder();
@@ -149,6 +147,8 @@ namespace ImageProcessing
                 {
                     encoder.Save(stream);
                 }
+
+                fileHasBeenSaved = true;
             }
         }
 

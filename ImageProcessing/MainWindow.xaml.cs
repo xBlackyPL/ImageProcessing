@@ -2,7 +2,10 @@
 using System.ComponentModel;
 using System.Windows;
 using Microsoft.Win32;
+using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace ImageProcessing
@@ -10,12 +13,12 @@ namespace ImageProcessing
     public partial class MainWindow : Window
     {
         private bool fileHasBeenSaved = true;
-        private BitmapImage currentActiveImage;
+        private Bitmap currentActiveImage;
         
         public MainWindow()
         {
             InitializeComponent();
-            currentActiveImage = new BitmapImage();
+            
         }
 
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -45,11 +48,19 @@ namespace ImageProcessing
                 if (dlg.ShowDialog() == true)
                 {
                     var fileName = dlg.FileName;
-                    currentActiveImage = new BitmapImage(new Uri(fileName));
-                    Img.Source = currentActiveImage;
-                    SaveImageMenuItem.IsEnabled = true;
-                    RecentlyOpenedMenuItem.IsEnabled = true;
-                    fileHasBeenSaved = false;
+
+                    try
+                    {
+                        currentActiveImage = new Bitmap(fileName);
+                        Img.Source = new BitmapImage(new Uri(fileName));
+                        SaveImageMenuItem.IsEnabled = true;
+                        RecentlyOpenedMenuItem.IsEnabled = true;
+                        fileHasBeenSaved = false;
+                    }
+                    catch (NotSupportedException)
+                    {
+                        MessageBox.Show("Nieobsługiwanny format obrazu", "Ostrzeżenie", MessageBoxButton.OK,MessageBoxImage.Error);
+                    }
                 }
             }
             else
@@ -59,11 +70,18 @@ namespace ImageProcessing
                     if (dlg.ShowDialog() == true)
                     {
                         var fileName = dlg.FileName;
-                        currentActiveImage = new BitmapImage(new Uri(fileName));
-                        Img.Source = currentActiveImage;
-                        SaveImageMenuItem.IsEnabled = true;
-                        RecentlyOpenedMenuItem.IsEnabled = true;
-                        fileHasBeenSaved = false;
+                        try
+                        {
+                            currentActiveImage = new Bitmap(fileName);
+                            Img.Source = new BitmapImage(new Uri(fileName));
+                            SaveImageMenuItem.IsEnabled = true;
+                            RecentlyOpenedMenuItem.IsEnabled = true;
+                            fileHasBeenSaved = false;
+                        }
+                        catch (NotSupportedException)
+                        {
+                            MessageBox.Show("Nieobsługiwanny format obrazu", "Ostrzeżenie", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
                     }
                 }
                 else
@@ -116,11 +134,38 @@ namespace ImageProcessing
             if (dlg.ShowDialog() == true)
             {
                 var encoder = new PngBitmapEncoder();
-                encoder.Frames.Add(BitmapFrame.Create(currentActiveImage));
+
+                BitmapImage bitmapSource;
+                using (MemoryStream outStream = new MemoryStream())
+                {
+                    BitmapEncoder enc = new BmpBitmapEncoder();
+                    enc.Frames.Add(BitmapFrame.Create(Convert(currentActiveImage)));
+                    enc.Save(outStream);
+                    System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(outStream);
+                }
+
+                encoder.Frames.Add(BitmapFrame.Create(Convert(currentActiveImage)));
                 using (var stream = dlg.OpenFile())
                 {
                     encoder.Save(stream);
                 }
+            }
+        }
+
+        private BitmapImage Convert(Bitmap bmp)
+        {
+            using (var memory = new MemoryStream())
+            {
+                bmp.Save(memory, ImageFormat.Png);
+                memory.Position = 0;
+
+                var bitmapImage = new BitmapImage();
+                bitmapImage.BeginInit();
+                bitmapImage.StreamSource = memory;
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.EndInit();
+
+                return bitmapImage;
             }
         }
     }

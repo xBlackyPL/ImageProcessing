@@ -20,10 +20,22 @@
         </Menu>
         <Border Background="LightGray" BorderBrush="Silver" BorderThickness="1" Margin="0,20,0,0">
             <DockPanel LastChildFill="False" Margin="5,5,5,5">
-                <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" Width="150" Height="300" VerticalAlignment="Top">
+                <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" Width="200" Height="300" VerticalAlignment="Top">
                     <StackPanel>
-                        <ComboBox Height="30" Margin="5,5,5,5" VerticalAlignment="Top"/>
-                        <Button x:Name="Apply" Height="30" Margin="5,220,5,5" VerticalAlignment="Bottom" IsEnabled="False">
+                        <StackPanel Margin="5, 5, 5, 5" Background="Gainsboro">
+                            <Label x:Name="ImageProcessingList" Height="30" VerticalAlignment="Top" HorizontalAlignment="Center" FontWeight="Bold">
+                                Image transform methods
+                            </Label>
+                            <ComboBox x:Name="EffectsComboBox" Height="30" Margin="5,0,5,5" VerticalAlignment="Center" Padding="5, 5, 0, 0" ContextMenuClosing="EffectsComboBox_ContextMenuClosing">
+                                <ComboBoxItem x:Name="Gauss">Histogram equalization</ComboBoxItem>
+                                <ComboBoxItem x:Name="Ordfilt2">Ordfilt2</ComboBoxItem>
+                                <ComboBoxItem x:Name="Open">Opening with circle structuring element</ComboBoxItem>
+                                <ComboBoxItem x:Name="Etykietowanie">Image segmentation</ComboBoxItem>
+                            </ComboBox>
+                        </StackPanel>
+                       
+
+                        <Button x:Name="Apply" Height="30" VerticalAlignment="Bottom" IsEnabled="False" Margin="5, 5, 5, 5">
                             Apply
                         </Button>
                     </StackPanel>

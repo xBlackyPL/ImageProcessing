@@ -5,6 +5,7 @@ using Microsoft.Win32;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -18,6 +19,7 @@ namespace ImageProcessing
         public MainWindow()
         {
             InitializeComponent();
+            
         }
 
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -167,6 +169,11 @@ namespace ImageProcessing
 
                 return bitmapImage;
             }
+        }
+
+        private void EffectsComboBox_ContextMenuClosing(object sender, ContextMenuEventArgs e)
+        {
+
         }
     }
 }

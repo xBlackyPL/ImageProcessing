@@ -5,7 +5,9 @@ using Microsoft.Win32;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
@@ -19,7 +21,6 @@ namespace ImageProcessing
         public MainWindow()
         {
             InitializeComponent();
-            
         }
 
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -171,9 +172,64 @@ namespace ImageProcessing
             }
         }
 
-        private void EffectsComboBox_ContextMenuClosing(object sender, ContextMenuEventArgs e)
+        private void EffectsComboBox_DropDownClosed(object sender, EventArgs e)
         {
+            var selectedOption = EffectsComboBox.SelectionBoxItem.ToString();
+            EffectOptions.Children.Clear();
+            
+            if (selectedOption == "Histogram equalization to Gaussian function")
+            {
+                var stdDevLabel = new Label();
+                
+                stdDevLabel.Content = "Standard deviation:";
+                EffectOptions.Children.Add(stdDevLabel);
 
+                var stdDev = new TextBox();
+                stdDev.PreviewTextInput += AllowsOnlyNumeric;
+                EffectOptions.Children.Add(stdDev);
+            }
+
+            if (selectedOption == "Ordfilt2")
+            {
+                var maskSizeLabel = new Label();
+                maskSizeLabel.Content = "Mask size:";
+                EffectOptions.Children.Add(maskSizeLabel);
+
+                var maskSize = new TextBox();
+                maskSize.PreviewTextInput += AllowsOnlyNumeric;
+                EffectOptions.Children.Add(maskSize);
+
+                
+                var orderNumLabel = new Label();
+                orderNumLabel.Content = "Order number:";
+                EffectOptions.Children.Add(orderNumLabel);
+
+                var orderdNum = new TextBox();
+                orderdNum.PreviewTextInput += AllowsOnlyNumeric;
+                EffectOptions.Children.Add(orderdNum);
+            }
+
+            if (selectedOption == "Opening with circle structuring element")
+            {
+                var circleRadiusLabel = new Label();
+                circleRadiusLabel.Content = "Circle radius:";
+                EffectOptions.Children.Add(circleRadiusLabel);
+
+                var circleRadius = new TextBox();
+                circleRadius.PreviewTextInput += AllowsOnlyNumeric;
+                EffectOptions.Children.Add(circleRadius);
+            }
+
+            if (selectedOption == "Image segmentation")
+            {
+               
+            }
+        }
+
+        private void AllowsOnlyNumeric(object sender, TextCompositionEventArgs textCompositionEventArgs)
+        {
+            Regex regex = new Regex("[^0-9\\.,]+");
+            textCompositionEventArgs.Handled = regex.IsMatch(textCompositionEventArgs.Text);
         }
     }
 }

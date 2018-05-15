@@ -37,7 +37,7 @@
 
                         </StackPanel>
 
-                        <Button x:Name="Apply" Height="30" VerticalAlignment="Bottom" IsEnabled="False" Margin="5, 5, 5, 5">
+                        <Button x:Name="Apply" Height="30" VerticalAlignment="Bottom" IsEnabled="False" Margin="5, 5, 5, 5" Click="Apply_Click">
                             Apply
                         </Button>
                     </StackPanel>

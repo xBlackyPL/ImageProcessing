@@ -10,6 +10,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using ImageProcess;
 
 namespace ImageProcessing
 {
@@ -17,6 +18,7 @@ namespace ImageProcessing
     {
         private bool fileHasBeenSaved = true;
         private Bitmap currentActiveImage;
+        int selected = 0;
         
         public MainWindow()
         {
@@ -130,7 +132,7 @@ namespace ImageProcessing
                 dlg.Filter = String.Format("{0}{1}{2} ({3})|{3}", dlg.Filter, sep, codecName, c.FilenameExtension);
                 sep = "|";
             }
-
+            
             dlg.DefaultExt = ".png";
 
             if (dlg.ShowDialog() == true)
@@ -169,7 +171,7 @@ namespace ImageProcessing
                 bitmapImage.EndInit();
 
                 return bitmapImage;
-            }
+            }            
         }
 
         private void EffectsComboBox_DropDownClosed(object sender, EventArgs e)
@@ -179,6 +181,7 @@ namespace ImageProcessing
             
             if (selectedOption == "Histogram equalization to Gaussian function")
             {
+                selected = 1;   
                 var stdDevLabel = new Label();
                 
                 stdDevLabel.Content = "Standard deviation:";
@@ -191,6 +194,7 @@ namespace ImageProcessing
 
             if (selectedOption == "Ordfilt2")
             {
+                selected = 2;
                 var maskSizeLabel = new Label();
                 maskSizeLabel.Content = "Mask size:";
                 EffectOptions.Children.Add(maskSizeLabel);
@@ -211,6 +215,7 @@ namespace ImageProcessing
 
             if (selectedOption == "Opening with circle structuring element")
             {
+                selected = 3;
                 var circleRadiusLabel = new Label();
                 circleRadiusLabel.Content = "Circle radius:";
                 EffectOptions.Children.Add(circleRadiusLabel);
@@ -222,14 +227,24 @@ namespace ImageProcessing
 
             if (selectedOption == "Image segmentation")
             {
-               
+                selected = 4;               
             }
+            Apply.IsEnabled = true;
         }
 
         private void AllowsOnlyNumeric(object sender, TextCompositionEventArgs textCompositionEventArgs)
         {
             Regex regex = new Regex("[^0-9\\.,]+");
             textCompositionEventArgs.Handled = regex.IsMatch(textCompositionEventArgs.Text);
+        }
+
+        private void Apply_Click(object sender, RoutedEventArgs e)
+        {
+            if(selected == 1)
+            {
+                var result = ImageProcess.ImageProcess.ImageHistogramNormalizationRGB(currentActiveImage);
+                Img.Source = Convert(result);
+            }
         }
     }
 }

@@ -7,11 +7,55 @@ using System.Drawing;
 using System.Drawing.Imaging;
 
 
-namespace ImageProcess
+namespace ImageProcessing
 {
     class ImageProcess
     {
-        public static Bitmap ImageHistogramNormalizationRGB(Bitmap sourceImage)
+        public static int[] GetImageHistogramMonochromatic(Bitmap sourceImage)
+        {
+            var histogram = new int[256];
+            for (var i = 0; i < sourceImage.Height; i++)
+            {
+                for (var j = 0; j < sourceImage.Width; j++)
+                {
+                    var pixel = sourceImage.GetPixel(j, i);
+                    histogram[pixel.R]++;
+                }
+            }
+
+            return histogram;
+        }
+
+        private static int[] getHistogramCumulant(int[] sourceHistogram)
+        {
+            var histogramCumulant = new int[256];
+
+            for (var i = 1; i < sourceHistogram.Length; i++)
+            {
+                histogramCumulant[i] = sourceHistogram[i] + sourceHistogram[i - 1];
+            }
+
+            return histogramCumulant;
+        }
+        
+        public static Bitmap ImageHistogramGaussNormalizationMonochromatic(Bitmap sourceImage, double stdDeviation)
+        {
+            var result = new Bitmap(sourceImage.Width, sourceImage.Height);
+
+            var sourceHistogram = GetImageHistogramMonochromatic(sourceImage);
+
+
+            var sourceHistogramCumulant = new int[256];
+
+            
+
+            
+
+
+
+        }
+
+        public static Bitmap ImageHistogramGaussianNormalizationRGB(Bitmap sourceImage, double stdDeviation)
         {
             Bitmap result = new Bitmap(sourceImage.Width, sourceImage.Height);
             var pixels = new Color[sourceImage.Width, sourceImage.Height];
@@ -65,6 +109,20 @@ namespace ImageProcess
                 } 
 
             return result;
+        }
+        
+        public static bool monochromaticValidation(Bitmap sourceImage)
+        {
+            for (var i = 0; i < sourceImage.Height; i++)
+                for (var j = 0; i < sourceImage.Width; i++)
+                {
+                    var pixel = sourceImage.GetPixel(j, i);
+                    if (pixel.R == pixel.G && pixel.R == pixel.B)
+                        continue;
+                    return false;
+                }
+
+            return true;
         }
     }
 }

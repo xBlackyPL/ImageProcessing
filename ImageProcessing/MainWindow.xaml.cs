@@ -10,7 +10,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using ImageProcess;
+using static System.Windows.MessageBox;
 
 namespace ImageProcessing
 {
@@ -18,6 +18,7 @@ namespace ImageProcessing
     {
         private bool fileHasBeenSaved = true;
         private Bitmap currentActiveImage;
+        bool isMonochromatic = false;
         int selected = 0;
         
         public MainWindow()
@@ -60,6 +61,7 @@ namespace ImageProcessing
                         SaveImageMenuItem.IsEnabled = true;
                         RecentlyOpenedMenuItem.IsEnabled = true;
                         fileHasBeenSaved = false;
+                        isMonochromatic = ImageProcess.monochromaticValidation(currentActiveImage);
                     }
                     catch (NotSupportedException)
                     {
@@ -74,6 +76,7 @@ namespace ImageProcessing
                     if (dlg.ShowDialog() == true)
                     {
                         var fileName = dlg.FileName;
+
                         try
                         {
                             currentActiveImage = new Bitmap(fileName);
@@ -81,6 +84,7 @@ namespace ImageProcessing
                             SaveImageMenuItem.IsEnabled = true;
                             RecentlyOpenedMenuItem.IsEnabled = true;
                             fileHasBeenSaved = false;
+                            isMonochromatic = ImageProcess.monochromaticValidation(currentActiveImage);
                         }
                         catch (NotSupportedException)
                         {
@@ -242,8 +246,40 @@ namespace ImageProcessing
         {
             if(selected == 1)
             {
-                var result = ImageProcess.ImageProcess.ImageHistogramNormalizationRGB(currentActiveImage);
-                Img.Source = Convert(result);
+                if (isMonochromatic)
+                {
+                    var result = ImageProcess.ImageHistogramGaussNormalizationMonochromatic(currentActiveImage, 0.01);
+                    Img.Source = Convert(result);
+                }
+                else
+                {
+                    var result = ImageProcess.ImageHistogramGaussianNormalizationRGB(currentActiveImage, 0.01);
+                    Img.Source = Convert(result);
+                }
+            }
+            else if (selected == 2)
+            {
+
+            }
+            else if (selected == 3)
+            {
+
+            }
+            else if (selected == 4)
+            {
+
+            }
+            else
+            {
+                /**
+                 * Should never happend
+                 */
+
+                var messageBoxResult = MessageBox.Show("Nieznany błąd", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (messageBoxResult == MessageBoxResult.OK)
+                {
+                    Application.Current.Shutdown();
+                }
             }
         }
     }

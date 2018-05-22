@@ -11,6 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using static System.Windows.MessageBox;
+using Image = System.Drawing.Image;
 
 namespace ImageProcessing
 {
@@ -20,7 +21,10 @@ namespace ImageProcessing
         private Bitmap currentActiveImage;
         bool isMonochromatic = false;
         int selected = 0;
-        
+        private TextBox stdDeviationTextBox;
+        private TextBox maskSizeTextBox;
+        private TextBox orderdNumberTextBox;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -61,7 +65,7 @@ namespace ImageProcessing
                         SaveImageMenuItem.IsEnabled = true;
                         RecentlyOpenedMenuItem.IsEnabled = true;
                         fileHasBeenSaved = false;
-                        isMonochromatic = ImageProcess.monochromaticValidation(currentActiveImage);
+                        isMonochromatic = ImageProcess.MonochromaticValidation(currentActiveImage);
                     }
                     catch (NotSupportedException)
                     {
@@ -84,7 +88,7 @@ namespace ImageProcessing
                             SaveImageMenuItem.IsEnabled = true;
                             RecentlyOpenedMenuItem.IsEnabled = true;
                             fileHasBeenSaved = false;
-                            isMonochromatic = ImageProcess.monochromaticValidation(currentActiveImage);
+                            isMonochromatic = ImageProcess.MonochromaticValidation(currentActiveImage);
                         }
                         catch (NotSupportedException)
                         {
@@ -182,63 +186,57 @@ namespace ImageProcessing
         {
             var selectedOption = EffectsComboBox.SelectionBoxItem.ToString();
             EffectOptions.Children.Clear();
-            
+
             if (selectedOption == "Histogram equalization to Gaussian function")
             {
-                selected = 1;   
-                var stdDevLabel = new Label();
-                
-                stdDevLabel.Content = "Standard deviation:";
+                selected = 1;
+                var stdDevLabel = new Label {Content = "Standard deviation:"};
+
                 EffectOptions.Children.Add(stdDevLabel);
 
-                var stdDev = new TextBox();
-                stdDev.PreviewTextInput += AllowsOnlyNumeric;
-                EffectOptions.Children.Add(stdDev);
+                stdDeviationTextBox = new TextBox();
+                stdDeviationTextBox.PreviewTextInput += AllowsOnlyNumeric;
+                EffectOptions.Children.Add(stdDeviationTextBox);
             }
-
-            if (selectedOption == "Ordfilt2")
+            else if (selectedOption == "Ordfilt2")
             {
                 selected = 2;
-                var maskSizeLabel = new Label();
-                maskSizeLabel.Content = "Mask size:";
+                var maskSizeLabel = new Label {Content = "Mask size:"};
                 EffectOptions.Children.Add(maskSizeLabel);
 
-                var maskSize = new TextBox();
-                maskSize.PreviewTextInput += AllowsOnlyNumeric;
-                EffectOptions.Children.Add(maskSize);
+                maskSizeTextBox = new TextBox();
+                maskSizeTextBox.PreviewTextInput += AllowsOnlyNumeric;
+                EffectOptions.Children.Add(maskSizeTextBox);
 
-                
-                var orderNumLabel = new Label();
-                orderNumLabel.Content = "Order number:";
+
+                var orderNumLabel = new Label {Content = "Order number:"};
                 EffectOptions.Children.Add(orderNumLabel);
 
-                var orderdNum = new TextBox();
-                orderdNum.PreviewTextInput += AllowsOnlyNumeric;
-                EffectOptions.Children.Add(orderdNum);
+                orderdNumberTextBox = new TextBox();
+                orderdNumberTextBox.PreviewTextInput += AllowsOnlyNumeric;
+                EffectOptions.Children.Add(orderdNumberTextBox);
             }
-
-            if (selectedOption == "Opening with circle structuring element")
+            else if (selectedOption == "Opening with circle structuring element")
             {
                 selected = 3;
-                var circleRadiusLabel = new Label();
-                circleRadiusLabel.Content = "Circle radius:";
-                EffectOptions.Children.Add(circleRadiusLabel);
-
-                var circleRadius = new TextBox();
-                circleRadius.PreviewTextInput += AllowsOnlyNumeric;
-                EffectOptions.Children.Add(circleRadius);
+//                var circleRadiusLabel = new Label {Content = "Circle radius:"};
+//                EffectOptions.Children.Add(circleRadiusLabel);
+//
+//                var circleRadius = new TextBox();
+//                circleRadius.PreviewTextInput += AllowsOnlyNumeric;
+//                EffectOptions.Children.Add(circleRadius);
             }
-
-            if (selectedOption == "Image segmentation")
+            else if (selectedOption == "Image segmentation")
             {
-                selected = 4;               
+                selected = 4;
             }
+
             Apply.IsEnabled = true;
         }
 
-        private void AllowsOnlyNumeric(object sender, TextCompositionEventArgs textCompositionEventArgs)
+        private static void AllowsOnlyNumeric(object sender, TextCompositionEventArgs textCompositionEventArgs)
         {
-            Regex regex = new Regex("[^0-9\\.,]+");
+            var regex = new Regex("[^0-9\\.,]+");
             textCompositionEventArgs.Handled = regex.IsMatch(textCompositionEventArgs.Text);
         }
 
@@ -246,20 +244,47 @@ namespace ImageProcessing
         {
             if(selected == 1)
             {
+                double.TryParse(stdDeviationTextBox.Text, out var stdDeviation);
                 if (isMonochromatic)
                 {
-                    var result = ImageProcess.ImageHistogramGaussNormalizationMonochromatic(currentActiveImage, 0.01);
+                    var result = ImageProcess.ImageHistogramGaussNormalizationMonochromatic(currentActiveImage, stdDeviation);
                     Img.Source = Convert(result);
                 }
                 else
                 {
-                    var result = ImageProcess.ImageHistogramGaussianNormalizationRGB(currentActiveImage, 0.01);
+                    var result = ImageProcess.ImageHistogramGaussianNormalizationRGB(currentActiveImage, stdDeviation);
                     Img.Source = Convert(result);
                 }
             }
             else if (selected == 2)
             {
+                int.TryParse(maskSizeTextBox.Text, out var maskSize);
+                int.TryParse(orderdNumberTextBox.Text, out var orderNumber);
 
+                if (orderNumber == 0 || maskSize == 0)
+                {
+                    MessageBox.Show("Niewłaściwa wartość numeru porzątkowego lub rozmiar maski", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                if (orderNumber > maskSize * maskSize)
+                {
+                    MessageBox.Show("Niewłaściwa wartość numeru porzątkowego", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                if (isMonochromatic)
+                {
+                    var result = ImageProcess.ImageOrdfilt2Monochromatic(currentActiveImage,maskSize, orderNumber);
+                    Img.Source = Convert(result);
+                    currentActiveImage = result;
+                }
+                else
+                {
+                    var result = ImageProcess.ImageOrdfilt2RBG(currentActiveImage, maskSize, orderNumber);
+                    Img.Source = Convert(result);
+                    currentActiveImage = result;
+                }
             }
             else if (selected == 3)
             {
@@ -271,10 +296,6 @@ namespace ImageProcessing
             }
             else
             {
-                /**
-                 * Should never happend
-                 */
-
                 var messageBoxResult = MessageBox.Show("Nieznany błąd", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
                 if (messageBoxResult == MessageBoxResult.OK)
                 {

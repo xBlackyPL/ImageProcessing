@@ -1,128 +1,204 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
-
 
 namespace ImageProcessing
 {
-    class ImageProcess
+    internal class ImageProcess
     {
+        public static bool MonochromaticValidation(Bitmap sourceImage)
+        {
+            for (var i = 0; i < sourceImage.Height; i++)
+            for (var j = 0; i < sourceImage.Width; i++)
+            {
+                var pixel = sourceImage.GetPixel(j, i);
+                if (pixel.R == pixel.G && pixel.R == pixel.B)
+                    continue;
+                return false;
+            }
+
+            return true;
+        }
+
         public static int[] GetImageHistogramMonochromatic(Bitmap sourceImage)
         {
             var histogram = new int[256];
             for (var i = 0; i < sourceImage.Height; i++)
+            for (var j = 0; j < sourceImage.Width; j++)
             {
-                for (var j = 0; j < sourceImage.Width; j++)
-                {
-                    var pixel = sourceImage.GetPixel(j, i);
-                    histogram[pixel.R]++;
-                }
+                var pixel = sourceImage.GetPixel(j, i);
+                histogram[pixel.R]++;
             }
 
             return histogram;
         }
 
-        private static int[] getHistogramCumulant(int[] sourceHistogram)
+        private static int[] GetHistogramCumulant(int[] sourceHistogram)
         {
             var histogramCumulant = new int[256];
+            histogramCumulant[0] = sourceHistogram[0];
 
             for (var i = 1; i < sourceHistogram.Length; i++)
-            {
-                histogramCumulant[i] = sourceHistogram[i] + sourceHistogram[i - 1];
-            }
+                histogramCumulant[i] = sourceHistogram[i] + histogramCumulant[i - 1];
 
             return histogramCumulant;
         }
-        
+
         public static Bitmap ImageHistogramGaussNormalizationMonochromatic(Bitmap sourceImage, double stdDeviation)
         {
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
-
             var sourceHistogram = GetImageHistogramMonochromatic(sourceImage);
+            var sourceHistogramCumulant = GetHistogramCumulant(sourceHistogram);
 
+            var numberOfColorClasses = 32;
 
-            var sourceHistogramCumulant = new int[256];
+            for (var i = 0; i < 256; i++)
+            {
+            }
 
-            
-
-            
-
-
-
+            return result;
         }
 
         public static Bitmap ImageHistogramGaussianNormalizationRGB(Bitmap sourceImage, double stdDeviation)
         {
-            Bitmap result = new Bitmap(sourceImage.Width, sourceImage.Height);
-            var pixels = new Color[sourceImage.Width, sourceImage.Height];
+            var result = new Bitmap(sourceImage.Width, sourceImage.Height);
+            return result;
+        }
 
+        public static Bitmap ImageOrdfilt2Monochromatic(Bitmap sourceImage, int maskSize, int orderNumber)
+        {
+            var result = new Bitmap(sourceImage.Width, sourceImage.Height);
 
-            var stdDev = 0.4;
-
-
-            var histR = new int[256];
-            var histG = new int[256];
-            var histB = new int[256];
-            var expectedValueR = 0;
-            var expectedValueG = 0;
-            var expectedValueB = 0;
-
-            var numberOfAllPixels = sourceImage.Width * sourceImage.Height;
-
-            for (int i = 0; i < sourceImage.Width - 1; i++)
-                for (int j = 0; j < sourceImage.Height - 1; j++)
-                {
-                    var pixel = sourceImage.GetPixel(i, j);
-                    histR[pixel.R]++;
-                    histG[pixel.G]++;
-                    histB[pixel.B]++;
-                    pixels[i, j] = pixel;
-                }
-
-            for (int i = 0; i < 256; i++)
+            for (var i = 0; i < sourceImage.Height - 1; i++)
+            for (var j = 0; j < sourceImage.Width - 1; j++)
             {
-                expectedValueR += i * histR[i];
-                expectedValueG += i * histG[i];
-                expectedValueB += i * histB[i];
+                var centralPoint = new Point(j, i);
+                result.SetPixel(j, i, Ordfilt2GetColorMonochromatic(sourceImage, maskSize, orderNumber, centralPoint));
             }
-
-            expectedValueR /= numberOfAllPixels;
-            expectedValueG /= numberOfAllPixels;
-            expectedValueB /= numberOfAllPixels;
-
-            for (int i = 0; i < sourceImage.Width - 1; i++)
-                for (int j = 0; j < sourceImage.Height - 1; j++)
-                {
-                    var newPixel = new Color();
-                    var R = (1 / Math.Sqrt(2 * Math.PI * stdDev)) * (Math.Exp((-1) * Math.Pow((pixels[i, j].R - expectedValueR), 2) / stdDev));
-                    var G = (1 / Math.Sqrt(2 * Math.PI * stdDev)) * (Math.Exp((-1) * Math.Pow((pixels[i, j].G - expectedValueG), 2) / stdDev));
-                    var B = (1 / Math.Sqrt(2 * Math.PI * stdDev)) * (Math.Exp((-1) * Math.Pow((pixels[i, j].B - expectedValueB), 2) / stdDev));
-                    R *= 255;
-                    G *= 255;
-                    B *= 255;
-                    newPixel = Color.FromArgb((int)R, (int)G, (int)B);
-                    result.SetPixel(i, j, newPixel); 
-                } 
 
             return result;
         }
-        
-        public static bool monochromaticValidation(Bitmap sourceImage)
+
+        public static Bitmap ImageOrdfilt2RBG(Bitmap sourceImage, int maskSize, int orderNumber)
         {
-            for (var i = 0; i < sourceImage.Height; i++)
-                for (var j = 0; i < sourceImage.Width; i++)
+            var result = new Bitmap(sourceImage.Width, sourceImage.Height);
+
+            for (var i = 0; i < sourceImage.Height - 1; i++)
+            for (var j = 0; j < sourceImage.Width - 1; j++)
+            {
+                var centralPoint = new Point(j, i);
+                result.SetPixel(j, i, Ordfilt2GetColorRGB(sourceImage, maskSize, orderNumber, centralPoint));
+            }
+
+            return result;
+        }
+
+
+        private static Color Ordfilt2GetColorMonochromatic(Bitmap sourceImage, int maskSize, int orderNumber,
+            Point startingPoint)
+        {
+            var colorValues = new List<int>();
+
+            for (var i = startingPoint.Y; i < startingPoint.Y + maskSize; i++)
+            for (var j = startingPoint.X; j < startingPoint.X + maskSize; j++)
+            {
+                var colorValue = 0;
+
+                if (j > sourceImage.Width - 1 && i > sourceImage.Height - 1)
+                    colorValue = sourceImage
+                        .GetPixel(j - (j - (sourceImage.Width - 1)), i - (i - (sourceImage.Height - 1))).R;
+                else if (j > sourceImage.Width - 1)
+                    colorValue = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)), i).R;
+                else if (i > sourceImage.Height - 1)
+                    colorValue = sourceImage.GetPixel(j, i - (i - (sourceImage.Height - 1))).R;
+                else if (i < maskSize && j < maskSize)
+                    colorValue = sourceImage.GetPixel(j + maskSize / 2, i + maskSize / 2).R;
+                else if (i < maskSize)
+                    colorValue = sourceImage.GetPixel(j, i + maskSize / 2).R;
+                else if (j < maskSize)
+                    colorValue = sourceImage.GetPixel(j + maskSize / 2, i).R;
+                else
+                    colorValue = sourceImage.GetPixel(j, i).R;
+
+                colorValues.Add(colorValue);
+            }
+
+            colorValues.Sort();
+            var newColor = Color.FromArgb(colorValues[orderNumber - 1], colorValues[orderNumber - 1],
+                colorValues[orderNumber - 1]);
+            return newColor;
+        }
+
+        private static Color Ordfilt2GetColorRGB(Bitmap sourceImage, int maskSize, int orderNumber, Point startingPoint)
+        {
+            var colorValuesR = new List<int>();
+            var colorValuesG = new List<int>();
+            var colorValuesB = new List<int>();
+
+            for (var i = startingPoint.Y; i < startingPoint.Y + maskSize; i++)
+            for (var j = startingPoint.X; j < startingPoint.X + maskSize; j++)
+            {
+                var colorValueR = 0;
+                var colorValueG = 0;
+                var colorValueB = 0;
+
+                if (j > sourceImage.Width - 1 && i > sourceImage.Height - 1)
                 {
-                    var pixel = sourceImage.GetPixel(j, i);
-                    if (pixel.R == pixel.G && pixel.R == pixel.B)
-                        continue;
-                    return false;
+                    colorValueR = sourceImage
+                        .GetPixel(j - (j - (sourceImage.Width - 1)), i - (i - (sourceImage.Height - 1))).R;
+                    colorValueG = sourceImage
+                        .GetPixel(j - (j - (sourceImage.Width - 1)), i - (i - (sourceImage.Height - 1))).G;
+                    colorValueB = sourceImage
+                        .GetPixel(j - (j - (sourceImage.Width - 1)), i - (i - (sourceImage.Height - 1))).B;
+                }
+                else if (j > sourceImage.Width - 1)
+                {
+                    colorValueR = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)), i).R;
+                    colorValueG = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)), i).G;
+                    colorValueB = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)), i).B;
+                }
+                else if (i > sourceImage.Height - 1)
+                {
+                    colorValueR = sourceImage.GetPixel(j, i - (i - (sourceImage.Height - 1))).R;
+                    colorValueG = sourceImage.GetPixel(j, i - (i - (sourceImage.Height - 1))).G;
+                    colorValueB = sourceImage.GetPixel(j, i - (i - (sourceImage.Height - 1))).B;
+                }
+                else if (i < maskSize && j < maskSize)
+                {
+                    colorValueR = sourceImage.GetPixel(j + maskSize / 2, i + maskSize / 2).R;
+                    colorValueG = sourceImage.GetPixel(j + maskSize / 2, i + maskSize / 2).G;
+                    colorValueB = sourceImage.GetPixel(j + maskSize / 2, i + maskSize / 2).B;
+                }
+                else if (i < maskSize)
+                {
+                    colorValueR = sourceImage.GetPixel(j, i + maskSize / 2).R;
+                    colorValueG = sourceImage.GetPixel(j, i + maskSize / 2).G;
+                    colorValueB = sourceImage.GetPixel(j, i + maskSize / 2).B;
+                }
+                else if (j < maskSize)
+                {
+                    colorValueR = sourceImage.GetPixel(j + maskSize / 2, i).R;
+                    colorValueG = sourceImage.GetPixel(j + maskSize / 2, i).G;
+                    colorValueB = sourceImage.GetPixel(j + maskSize / 2, i).B;
+                }
+                else
+                {
+                    colorValueR = sourceImage.GetPixel(j, i).R;
+                    colorValueG = sourceImage.GetPixel(j, i).G;
+                    colorValueB = sourceImage.GetPixel(j, i).B;
                 }
 
-            return true;
+                colorValuesR.Add(colorValueR);
+                colorValuesG.Add(colorValueG);
+                colorValuesB.Add(colorValueB);
+            }
+
+            colorValuesR.Sort();
+            colorValuesG.Sort();
+            colorValuesB.Sort();
+
+            var newColor = Color.FromArgb(colorValuesR[orderNumber - 1], colorValuesG[orderNumber - 1],
+                colorValuesB[orderNumber - 1]);
+            return newColor;
         }
     }
 }

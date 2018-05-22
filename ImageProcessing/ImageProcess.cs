@@ -137,59 +137,27 @@ namespace ImageProcessing
             for (var i = startingPoint.Y; i < startingPoint.Y + maskSize; i++)
             for (var j = startingPoint.X; j < startingPoint.X + maskSize; j++)
             {
-                var colorValueR = 0;
-                var colorValueG = 0;
-                var colorValueB = 0;
+                Color subtractedColor;
 
                 if (j > sourceImage.Width - 1 && i > sourceImage.Height - 1)
-                {
-                    colorValueR = sourceImage
-                        .GetPixel(j - (j - (sourceImage.Width - 1)), i - (i - (sourceImage.Height - 1))).R;
-                    colorValueG = sourceImage
-                        .GetPixel(j - (j - (sourceImage.Width - 1)), i - (i - (sourceImage.Height - 1))).G;
-                    colorValueB = sourceImage
-                        .GetPixel(j - (j - (sourceImage.Width - 1)), i - (i - (sourceImage.Height - 1))).B;
-                }
+                    subtractedColor = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)),
+                        i - (i - (sourceImage.Height - 1)));
                 else if (j > sourceImage.Width - 1)
-                {
-                    colorValueR = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)), i).R;
-                    colorValueG = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)), i).G;
-                    colorValueB = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)), i).B;
-                }
+                    subtractedColor = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)), i);
                 else if (i > sourceImage.Height - 1)
-                {
-                    colorValueR = sourceImage.GetPixel(j, i - (i - (sourceImage.Height - 1))).R;
-                    colorValueG = sourceImage.GetPixel(j, i - (i - (sourceImage.Height - 1))).G;
-                    colorValueB = sourceImage.GetPixel(j, i - (i - (sourceImage.Height - 1))).B;
-                }
+                    subtractedColor = sourceImage.GetPixel(j, i - (i - (sourceImage.Height - 1)));
                 else if (i < maskSize && j < maskSize)
-                {
-                    colorValueR = sourceImage.GetPixel(j + maskSize / 2, i + maskSize / 2).R;
-                    colorValueG = sourceImage.GetPixel(j + maskSize / 2, i + maskSize / 2).G;
-                    colorValueB = sourceImage.GetPixel(j + maskSize / 2, i + maskSize / 2).B;
-                }
+                    subtractedColor = sourceImage.GetPixel(j + maskSize / 2, i + maskSize / 2);
                 else if (i < maskSize)
-                {
-                    colorValueR = sourceImage.GetPixel(j, i + maskSize / 2).R;
-                    colorValueG = sourceImage.GetPixel(j, i + maskSize / 2).G;
-                    colorValueB = sourceImage.GetPixel(j, i + maskSize / 2).B;
-                }
+                    subtractedColor = sourceImage.GetPixel(j, i + maskSize / 2);
                 else if (j < maskSize)
-                {
-                    colorValueR = sourceImage.GetPixel(j + maskSize / 2, i).R;
-                    colorValueG = sourceImage.GetPixel(j + maskSize / 2, i).G;
-                    colorValueB = sourceImage.GetPixel(j + maskSize / 2, i).B;
-                }
+                    subtractedColor = sourceImage.GetPixel(j + maskSize / 2, i);
                 else
-                {
-                    colorValueR = sourceImage.GetPixel(j, i).R;
-                    colorValueG = sourceImage.GetPixel(j, i).G;
-                    colorValueB = sourceImage.GetPixel(j, i).B;
-                }
+                    subtractedColor = sourceImage.GetPixel(j, i);
 
-                colorValuesR.Add(colorValueR);
-                colorValuesG.Add(colorValueG);
-                colorValuesB.Add(colorValueB);
+                colorValuesR.Add(subtractedColor.R);
+                colorValuesG.Add(subtractedColor.G);
+                colorValuesB.Add(subtractedColor.B);
             }
 
             colorValuesR.Sort();

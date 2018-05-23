@@ -1,29 +1,27 @@
 ﻿using System;
-using System.ComponentModel;
-using System.Windows;
-using Microsoft.Win32;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using static System.Windows.MessageBox;
-using Image = System.Drawing.Image;
+using Microsoft.Win32;
 
 namespace ImageProcessing
 {
     public partial class MainWindow : Window
     {
-        private bool fileHasBeenSaved = true;
         private Bitmap currentActiveImage;
-        bool isMonochromatic = false;
-        int selected = 0;
-        private TextBox stdDeviationTextBox;
+        private bool fileHasBeenSaved = true;
+        private bool isMonochromatic;
+        private TextBox lineElementAngle;
+        private TextBox lineElementLength;
         private TextBox maskSizeTextBox;
         private TextBox orderdNumberTextBox;
+        private int selected;
+        private TextBox stdDeviationTextBox;
 
         public MainWindow()
         {
@@ -37,16 +35,16 @@ namespace ImageProcessing
 
         private void LoadFile_MenuItemClick(object sender, RoutedEventArgs e)
         {
-            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            var dlg = new OpenFileDialog();
             dlg.Filter = "";
 
-            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
-            string sep = string.Empty;
+            var codecs = ImageCodecInfo.GetImageEncoders();
+            var sep = string.Empty;
 
             foreach (var c in codecs)
             {
-                string codecName = c.CodecName.Substring(8).Replace("Codec", "Files").Trim();
-                dlg.Filter = String.Format("{0}{1}{2} ({3})|{3}", dlg.Filter, sep, codecName, c.FilenameExtension);
+                var codecName = c.CodecName.Substring(8).Replace("Codec", "Files").Trim();
+                dlg.Filter = string.Format("{0}{1}{2} ({3})|{3}", dlg.Filter, sep, codecName, c.FilenameExtension);
                 sep = "|";
             }
 
@@ -69,31 +67,32 @@ namespace ImageProcessing
                     }
                     catch (NotSupportedException)
                     {
-                        MessageBox.Show("Nieobsługiwanny format obrazu", "Ostrzeżenie", MessageBoxButton.OK,MessageBoxImage.Error);
+                        MessageBox.Show("Unknown image format", "Warning", MessageBoxButton.OK,
+                            MessageBoxImage.Error);
                     }
                 }
             }
             else
             {
-                if (MessageBox.Show("Chcesz otworzyć nowy obraz bez zapisania starego?", "Bez zapisu", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+                if (MessageBox.Show("Open new image without saving changes on current one?", "Warning",
+                        MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                 {
-                    if (dlg.ShowDialog() == true)
-                    {
-                        var fileName = dlg.FileName;
+                    if (dlg.ShowDialog() != true) return;
+                    var fileName = dlg.FileName;
 
-                        try
-                        {
-                            currentActiveImage = new Bitmap(fileName);
-                            Img.Source = new BitmapImage(new Uri(fileName));
-                            SaveImageMenuItem.IsEnabled = true;
-                            RecentlyOpenedMenuItem.IsEnabled = true;
-                            fileHasBeenSaved = false;
-                            isMonochromatic = ImageProcess.MonochromaticValidation(currentActiveImage);
-                        }
-                        catch (NotSupportedException)
-                        {
-                            MessageBox.Show("Nieobsługiwanny format obrazu", "Ostrzeżenie", MessageBoxButton.OK, MessageBoxImage.Error);
-                        }
+                    try
+                    {
+                        currentActiveImage = new Bitmap(fileName);
+                        Img.Source = new BitmapImage(new Uri(fileName));
+                        SaveImageMenuItem.IsEnabled = true;
+                        RecentlyOpenedMenuItem.IsEnabled = true;
+                        fileHasBeenSaved = false;
+                        isMonochromatic = ImageProcess.MonochromaticValidation(currentActiveImage);
+                    }
+                    catch (NotSupportedException)
+                    {
+                        MessageBox.Show("Unknown image format", "Warning", MessageBoxButton.OK,
+                            MessageBoxImage.Error);
                     }
                 }
                 else
@@ -101,24 +100,18 @@ namespace ImageProcessing
                     SaveCurrentActiveImage();
                 }
             }
-
         }
 
         private void Exit_MenuItemClick(object sender, RoutedEventArgs e)
         {
-            if(!fileHasBeenSaved)
-                if (MessageBox.Show("Chcesz wyjść bez zapisania pliku?", "Wyjście bez zapisu", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                {
+            if (!fileHasBeenSaved)
+                if (MessageBox.Show("Chcesz wyjść bez zapisania pliku?", "Wyjście bez zapisu",
+                        MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                     Application.Current.Shutdown();
-                }
                 else
-                {
                     SaveCurrentActiveImage();
-                }
             else
-            {
                 Application.Current.Shutdown();
-            }
         }
 
         private void SaveImage_MenuItemClick(object sender, RoutedEventArgs e)
@@ -128,31 +121,30 @@ namespace ImageProcessing
 
         private void SaveCurrentActiveImage()
         {
-            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
-            dlg.Filter = "";
+            var dlg = new SaveFileDialog {Filter = ""};
 
-            ImageCodecInfo[] codecs = ImageCodecInfo.GetImageEncoders();
-            string sep = string.Empty;
+            var codecs = ImageCodecInfo.GetImageEncoders();
+            var sep = string.Empty;
 
             foreach (var c in codecs)
             {
-                string codecName = c.CodecName.Substring(8).Replace("Codec", "Files").Trim();
-                dlg.Filter = String.Format("{0}{1}{2} ({3})|{3}", dlg.Filter, sep, codecName, c.FilenameExtension);
+                var codecName = c.CodecName.Substring(8).Replace("Codec", "Files").Trim();
+                dlg.Filter = string.Format("{0}{1}{2} ({3})|{3}", dlg.Filter, sep, codecName, c.FilenameExtension);
                 sep = "|";
             }
-            
+
             dlg.DefaultExt = ".png";
 
             if (dlg.ShowDialog() == true)
             {
                 var encoder = new PngBitmapEncoder();
 
-                using (MemoryStream outStream = new MemoryStream())
+                using (var outStream = new MemoryStream())
                 {
                     BitmapEncoder enc = new BmpBitmapEncoder();
                     enc.Frames.Add(BitmapFrame.Create(Convert(currentActiveImage)));
                     enc.Save(outStream);
-                    System.Drawing.Bitmap bitmap = new System.Drawing.Bitmap(outStream);
+                    var bitmap = new Bitmap(outStream);
                 }
 
                 encoder.Frames.Add(BitmapFrame.Create(Convert(currentActiveImage)));
@@ -179,7 +171,7 @@ namespace ImageProcessing
                 bitmapImage.EndInit();
 
                 return bitmapImage;
-            }            
+            }
         }
 
         private void EffectsComboBox_DropDownClosed(object sender, EventArgs e)
@@ -216,17 +208,24 @@ namespace ImageProcessing
                 orderdNumberTextBox.PreviewTextInput += AllowsOnlyNumeric;
                 EffectOptions.Children.Add(orderdNumberTextBox);
             }
-            else if (selectedOption == "Opening with circle structuring element")
+            else if (selectedOption == "Opening by line as structuring element")
             {
                 selected = 3;
-//                var circleRadiusLabel = new Label {Content = "Circle radius:"};
-//                EffectOptions.Children.Add(circleRadiusLabel);
-//
-//                var circleRadius = new TextBox();
-//                circleRadius.PreviewTextInput += AllowsOnlyNumeric;
-//                EffectOptions.Children.Add(circleRadius);
+                var lineElementLengthLabel = new Label {Content = "Line element length:"};
+                EffectOptions.Children.Add(lineElementLengthLabel);
+
+                lineElementLength = new TextBox();
+                lineElementLength.PreviewTextInput += AllowsOnlyNumeric;
+                EffectOptions.Children.Add(lineElementLength);
+
+                var lineElementAngleLabel = new Label {Content = "Line element angle:"};
+                EffectOptions.Children.Add(lineElementAngleLabel);
+
+                lineElementAngle = new TextBox();
+                lineElementAngle.PreviewTextInput += AllowsOnlyNumeric;
+                EffectOptions.Children.Add(lineElementAngle);
             }
-            else if (selectedOption == "Image segmentation")
+            else if (selectedOption == "Filling the gaps in image's objects")
             {
                 selected = 4;
             }
@@ -242,12 +241,13 @@ namespace ImageProcessing
 
         private void Apply_Click(object sender, RoutedEventArgs e)
         {
-            if(selected == 1)
+            if (selected == 1)
             {
                 double.TryParse(stdDeviationTextBox.Text, out var stdDeviation);
                 if (isMonochromatic)
                 {
-                    var result = ImageProcess.ImageHistogramGaussNormalizationMonochromatic(currentActiveImage, stdDeviation);
+                    var result =
+                        ImageProcess.ImageHistogramGaussNormalizationMonochromatic(currentActiveImage, stdDeviation);
                     Img.Source = Convert(result);
                 }
                 else
@@ -263,19 +263,21 @@ namespace ImageProcessing
 
                 if (orderNumber == 0 || maskSize == 0)
                 {
-                    MessageBox.Show("Niewłaściwa wartość numeru porzątkowego lub rozmiar maski", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Invalid value of order number or mask size", "Value Error",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
                 if (orderNumber > maskSize * maskSize)
                 {
-                    MessageBox.Show("Niewłaściwa wartość numeru porzątkowego", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
+                    MessageBox.Show("Invalid value of order number", "Value Error", MessageBoxButton.OK,
+                        MessageBoxImage.Error);
                     return;
                 }
 
                 if (isMonochromatic)
                 {
-                    var result = ImageProcess.ImageOrdfilt2Monochromatic(currentActiveImage,maskSize, orderNumber);
+                    var result = ImageProcess.ImageOrdfilt2Monochromatic(currentActiveImage, maskSize, orderNumber);
                     Img.Source = Convert(result);
                     currentActiveImage = result;
                 }
@@ -288,19 +290,15 @@ namespace ImageProcessing
             }
             else if (selected == 3)
             {
-
             }
             else if (selected == 4)
             {
-
             }
             else
             {
-                var messageBoxResult = MessageBox.Show("Nieznany błąd", "Błąd", MessageBoxButton.OK, MessageBoxImage.Error);
-                if (messageBoxResult == MessageBoxResult.OK)
-                {
-                    Application.Current.Shutdown();
-                }
+                var messageBoxResult =
+                    MessageBox.Show("Unknown Error", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                if (messageBoxResult == MessageBoxResult.OK) Application.Current.Shutdown();
             }
         }
     }

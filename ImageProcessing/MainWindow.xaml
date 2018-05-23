@@ -29,8 +29,8 @@
                             <ComboBox x:Name="EffectsComboBox" Height="30" Margin="5,0,5,5" VerticalAlignment="Center" Padding="5, 5, 0, 0" DropDownClosed="EffectsComboBox_DropDownClosed">
                                 <ComboBoxItem x:Name="Gauss">Histogram equalization to Gaussian function</ComboBoxItem>
                                 <ComboBoxItem x:Name="Ordfilt2">Ordfilt2</ComboBoxItem>
-                                <ComboBoxItem x:Name="Open">Opening with circle structuring element</ComboBoxItem>
-                                <ComboBoxItem x:Name="Etykietowanie">Image segmentation</ComboBoxItem>
+                                <ComboBoxItem x:Name="Open">Opening by line as structuring element</ComboBoxItem>
+                                <ComboBoxItem x:Name="Etykietowanie">Filling the gaps in image's objects</ComboBoxItem>
                             </ComboBox>
                         </StackPanel>
                         <StackPanel x:Name="EffectOptions"  Margin="5,5,5,5">

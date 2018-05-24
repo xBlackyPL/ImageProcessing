@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 
 namespace ImageProcessing
@@ -7,8 +8,8 @@ namespace ImageProcessing
     {
         public static bool MonochromaticValidation(Bitmap sourceImage)
         {
-            for (var i = 0; i < sourceImage.Height; i++)
-            for (var j = 0; i < sourceImage.Width; i++)
+            for (var i = 0; i < sourceImage.Height - 1; i++)
+            for (var j = 0; j < sourceImage.Width - 1; j++)
             {
                 var pixel = sourceImage.GetPixel(j, i);
                 if (pixel.R == pixel.G && pixel.R == pixel.B)
@@ -167,6 +168,91 @@ namespace ImageProcessing
             var newColor = Color.FromArgb(colorValuesR[orderNumber - 1], colorValuesG[orderNumber - 1],
                 colorValuesB[orderNumber - 1]);
             return newColor;
+        }
+
+        public static Bitmap ImageOpeningByLineElement(Bitmap sourceImage, int angle, int size)
+        {
+            var result = new Bitmap(sourceImage.Width, sourceImage.Height);
+            var structElem = StructuralElementGenerator(angle, size);
+
+            foreach (var row in structElem)
+            {
+                foreach (var element in row) Console.Write("[ " + element + " ]");
+                Console.WriteLine();
+            }
+
+            Console.WriteLine();
+            return result;
+        }
+
+        private static int[][] StructuralElementGenerator(int angle, int structuralElementSize)
+        {
+            angle %= 180;
+            var above90Deg = angle > 90;
+            angle %= 91;
+
+            var alpha = angle * Math.PI / 180;
+            var columns = (int) Math.Ceiling(structuralElementSize * Math.Cos(alpha)) + 1;
+            var rows = (int) Math.Ceiling(structuralElementSize * Math.Sin(alpha)) + 1;
+
+            columns -= columns % 2 == 0 ? 1 : 0;
+            rows -= rows % 2 == 0 ? 1 : 0;
+
+            var structuralElement = new int[rows][];
+            for (var i = 0; i < rows; i++) structuralElement[i] = new int[columns];
+
+            var lineGradient = ((double) rows - 1) / ((double) columns - 1);
+
+            if (!double.IsInfinity(lineGradient))
+                for (var i = 0; i < columns; i++)
+                {
+                    var y = rows - lineGradient * i;
+                    structuralElement[(int) y - 1][i] = 1;
+                }
+            else
+                for (var i = 0; i < rows; i++)
+                    structuralElement[i][0] = 1;
+            
+            for (var i = 0; i < rows; i++)
+            {
+                var correctLine = false;
+
+                for (var j = 0; j < columns; j++)
+                    if (structuralElement[i][j] == 1)
+                        correctLine = true;
+
+                if (correctLine) continue;
+                var correctColumn = 0;
+
+                if (i <= rows / 2)
+                    for (var j = 0; j < columns; j++)
+                    {
+                        if (structuralElement[i - 1][j] != 1) continue;
+                        correctColumn = j;
+                        break;
+                    }
+                else
+                    for (var j = 0; j < columns; j++)
+                    {
+                        if (structuralElement[i + 1][j] != 1) continue;
+                        correctColumn = j;
+                        break;
+                    }
+
+                structuralElement[i][correctColumn] = 1;
+            }
+
+            if (!above90Deg) return structuralElement;
+
+            for (var i = 0; i < rows; i++)
+            for (var j = 0; j < columns / 2; j++)
+            {
+                var tmp = structuralElement[i][j];
+                structuralElement[i][j] = structuralElement[i][columns - 1 - j];
+                structuralElement[i][columns - 1 - j] = tmp;
+            }
+
+            return structuralElement;
         }
     }
 }

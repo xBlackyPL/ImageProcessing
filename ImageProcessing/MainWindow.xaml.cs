@@ -20,7 +20,7 @@ namespace ImageProcessing
         private TextBox lineElementLength;
         private TextBox maskSizeTextBox;
         private TextBox orderdNumberTextBox;
-        private int selected;
+        private int selected = 0;
         private TextBox stdDeviationTextBox;
 
         public MainWindow()
@@ -100,6 +100,8 @@ namespace ImageProcessing
                     SaveCurrentActiveImage();
                 }
             }
+
+            Apply.IsEnabled = true;
         }
 
         private void Exit_MenuItemClick(object sender, RoutedEventArgs e)
@@ -229,8 +231,6 @@ namespace ImageProcessing
             {
                 selected = 4;
             }
-
-            Apply.IsEnabled = true;
         }
 
         private static void AllowsOnlyNumeric(object sender, TextCompositionEventArgs textCompositionEventArgs)
@@ -263,14 +263,21 @@ namespace ImageProcessing
 
                 if (orderNumber == 0 || maskSize == 0)
                 {
-                    MessageBox.Show("Invalid value of order number or mask size", "Value Error",
+                    MessageBox.Show("Invalid value of order number or mask size.\nValues must be greater than zero.", "Value Error",
                         MessageBoxButton.OK, MessageBoxImage.Error);
                     return;
                 }
 
                 if (orderNumber > maskSize * maskSize)
                 {
-                    MessageBox.Show("Invalid value of order number", "Value Error", MessageBoxButton.OK,
+                    MessageBox.Show("Invalid value of order number.\nValue of order number must be within the range of mask matrix range.", "Value Error", MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                    return;
+                }
+
+                if (maskSize % 2 == 0)
+                {
+                    MessageBox.Show("Invalid mask size.\nSize of mask must be odd number.", "Value Error", MessageBoxButton.OK,
                         MessageBoxImage.Error);
                     return;
                 }
@@ -290,9 +297,18 @@ namespace ImageProcessing
             }
             else if (selected == 3)
             {
+                int.TryParse(lineElementAngle.Text, out var lineAngel);
+                int.TryParse(lineElementLength.Text, out var lineLength);
+                var result = ImageProcess.ImageOpeningByLineElement(currentActiveImage, lineAngel, lineLength);
+                Img.Source = Convert(result);
+                currentActiveImage = result;
             }
             else if (selected == 4)
             {
+            }
+            else if (selected == 0)
+            {
+                MessageBox.Show("Please select editing option", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             else
             {

@@ -173,7 +173,7 @@ namespace ImageProcessing
         public static Bitmap ImageOpeningByLineElement(Bitmap sourceImage, int angle, int size)
         {
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
-            var structElem = StructuralElementGenerator(angle, size);
+            var structElem = LineStructuralElementGenerator(angle, size);
 
             foreach (var row in structElem)
             {
@@ -185,7 +185,7 @@ namespace ImageProcessing
             return result;
         }
 
-        private static int[][] StructuralElementGenerator(int angle, int structuralElementSize)
+        private static int[][] LineStructuralElementGenerator(int angle, int structuralElementSize)
         {
             angle %= 180;
             var above90Deg = angle > 90;
@@ -212,7 +212,7 @@ namespace ImageProcessing
             else
                 for (var i = 0; i < rows; i++)
                     structuralElement[i][0] = 1;
-            
+
             for (var i = 0; i < rows; i++)
             {
                 var correctLine = false;
@@ -253,6 +253,23 @@ namespace ImageProcessing
             }
 
             return structuralElement;
+        }
+
+        public static Bitmap ImageErode(Bitmap sourceImage, int[][] structuralElement)
+        {
+            var pixelValueList = new List<Color>();
+            
+            for (var i = 0; i < sourceImage.Height - 1; i++)
+            for (var j = 0; j < sourceImage.Width - 1; j++)
+            {
+                    for(var k = 0; k < structuralElement.Length; k++)
+                    for (var z = 0; z < structuralElement[k].Length; z++)
+                    {
+                            if()
+                    }
+            }
+
+            return sourceImage;
         }
     }
 }

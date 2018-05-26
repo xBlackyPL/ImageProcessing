@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 
 namespace ImageProcessing
 {
@@ -172,16 +173,16 @@ namespace ImageProcessing
 
         public static Bitmap ImageOpeningByLineElement(Bitmap sourceImage, int angle, int size)
         {
-            var result = new Bitmap(sourceImage.Width, sourceImage.Height);
-            var structElem = LineStructuralElementGenerator(angle, size);
+            var structElement = LineStructuralElementGenerator(angle, size);
 
-            foreach (var row in structElem)
+            foreach (var row in structElement)
             {
-                foreach (var element in row) Console.Write("[ " + element + " ]");
+                foreach (var element in row) Console.Write(element + " ");
                 Console.WriteLine();
             }
 
-            Console.WriteLine();
+            var result = ImageErode(sourceImage, structElement);
+            result = ImageDilate(result, structElement);
             return result;
         }
 
@@ -257,19 +258,106 @@ namespace ImageProcessing
 
         public static Bitmap ImageErode(Bitmap sourceImage, int[][] structuralElement)
         {
-            var pixelValueList = new List<Color>();
-            
+            var result = new Bitmap(sourceImage.Width, sourceImage.Height);
+
             for (var i = 0; i < sourceImage.Height - 1; i++)
             for (var j = 0; j < sourceImage.Width - 1; j++)
             {
-                    for(var k = 0; k < structuralElement.Length; k++)
-                    for (var z = 0; z < structuralElement[k].Length; z++)
-                    {
-                            if()
-                    }
+                var centralPoint = new Point(j, i);
+                result.SetPixel(j, i, ImageErodeGetPixelValue(sourceImage, structuralElement, centralPoint));
             }
 
-            return sourceImage;
+            return result;
+        }
+
+        public static Bitmap ImageDilate(Bitmap sourceImage, int[][] structuralElement)
+        {
+            var result = new Bitmap(sourceImage.Width, sourceImage.Height);
+
+            for (var i = 0; i < sourceImage.Height - 1; i++)
+            for (var j = 0; j < sourceImage.Width - 1; j++)
+            {
+                var centralPoint = new Point(j, i);
+                result.SetPixel(j, i, ImageDilateGetPixelValue(sourceImage, structuralElement, centralPoint));
+            }
+
+            return result;
+        }
+
+
+        private static Color ImageErodeGetPixelValue(Bitmap sourceImage, IReadOnlyList<int[]> mask, Point startingPoint)
+        {
+            var pixelValues = new List<int>();
+            var rows = mask.Count;
+            var columns = mask.First().Length;
+
+            for (var i = startingPoint.Y; i < startingPoint.Y + rows; i++)
+            for (var j = startingPoint.X; j < startingPoint.X + columns; j++)
+            {
+                Color subtractedColor;
+                if (mask[i % rows][j % columns] != 1) continue;
+
+                if (j > sourceImage.Width - 1 && i > sourceImage.Height - 1)
+                    subtractedColor = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)),
+                        i - (i - (sourceImage.Height - 1)));
+                else if (j > sourceImage.Width - 1)
+                    subtractedColor = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)), i);
+                else if (i > sourceImage.Height - 1)
+                    subtractedColor = sourceImage.GetPixel(j, i - (i - (sourceImage.Height - 1)));
+                else if (i < rows && j < columns)
+                    subtractedColor = sourceImage.GetPixel(j + columns / 2, i + rows / 2);
+                else if (i < rows)
+                    subtractedColor = sourceImage.GetPixel(j, i + rows / 2);
+                else if (j < columns)
+                    subtractedColor = sourceImage.GetPixel(j + columns / 2, i);
+                else
+                    subtractedColor = sourceImage.GetPixel(j, i);
+
+                pixelValues.Add(subtractedColor.R);
+            }
+
+            pixelValues.Sort();
+            var newColor = Color.FromArgb(pixelValues.First(), pixelValues.First(), pixelValues.First());
+
+            return newColor;
+        }
+
+        private static Color ImageDilateGetPixelValue(Bitmap sourceImage, IReadOnlyList<int[]> mask,
+            Point startingPoint)
+        {
+            var pixelValues = new List<int>();
+            var rows = mask.Count;
+            var columns = mask.First().Length;
+
+            for (var i = startingPoint.Y; i < startingPoint.Y + rows; i++)
+            for (var j = startingPoint.X; j < startingPoint.X + columns; j++)
+            {
+                Color subtractedColor;
+                if (mask[i % rows][j % columns] != 1) continue;
+
+                if (j > sourceImage.Width - 1 && i > sourceImage.Height - 1)
+                    subtractedColor = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)),
+                        i - (i - (sourceImage.Height - 1)));
+                else if (j > sourceImage.Width - 1)
+                    subtractedColor = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)), i);
+                else if (i > sourceImage.Height - 1)
+                    subtractedColor = sourceImage.GetPixel(j, i - (i - (sourceImage.Height - 1)));
+                else if (i < rows && j < columns)
+                    subtractedColor = sourceImage.GetPixel(j + columns / 2, i + rows / 2);
+                else if (i < rows)
+                    subtractedColor = sourceImage.GetPixel(j, i + rows / 2);
+                else if (j < columns)
+                    subtractedColor = sourceImage.GetPixel(j + columns / 2, i);
+                else
+                    subtractedColor = sourceImage.GetPixel(j, i);
+
+                pixelValues.Add(subtractedColor.R);
+            }
+
+            pixelValues.Sort();
+            var newColor = Color.FromArgb(pixelValues.Last(), pixelValues.Last(), pixelValues.Last());
+
+            return newColor;
         }
     }
 }

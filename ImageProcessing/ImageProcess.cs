@@ -21,6 +21,22 @@ namespace ImageProcessing
             return true;
         }
 
+        public static Bitmap Monochromatic(Bitmap sourceImage)
+        {
+            var result = new Bitmap(sourceImage.Width,sourceImage.Height);
+
+            for (var i = 0; i < sourceImage.Height - 1; i++)
+            for (var j = 0; j < sourceImage.Width - 1; j++)
+            {
+                var pixel = sourceImage.GetPixel(j, i);
+                var colorValue = (int)(0.3 * pixel.R + 0.6 * pixel.G + 0.1 * pixel.B);
+                var newColor = Color.FromArgb(colorValue, colorValue, colorValue);
+                result.SetPixel(j,i,newColor);
+            }
+
+            return result;
+        }
+
         public static int[] GetImageHistogramMonochromatic(Bitmap sourceImage)
         {
             var histogram = new int[256];
@@ -273,7 +289,7 @@ namespace ImageProcessing
         public static Bitmap ImageDilate(Bitmap sourceImage, int[][] structuralElement)
         {
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
-
+            
             for (var i = 0; i < sourceImage.Height - 1; i++)
             for (var j = 0; j < sourceImage.Width - 1; j++)
             {
@@ -283,12 +299,11 @@ namespace ImageProcessing
 
             return result;
         }
-
-
-        private static Color ImageErodeGetPixelValue(Bitmap sourceImage, IReadOnlyList<int[]> mask, Point startingPoint)
+        
+        private static Color ImageErodeGetPixelValue(Bitmap sourceImage, int[][] mask, Point startingPoint)
         {
             var pixelValues = new List<int>();
-            var rows = mask.Count;
+            var rows = mask.Length;
             var columns = mask.First().Length;
 
             for (var i = startingPoint.Y; i < startingPoint.Y + rows; i++)
@@ -322,13 +337,13 @@ namespace ImageProcessing
             return newColor;
         }
 
-        private static Color ImageDilateGetPixelValue(Bitmap sourceImage, IReadOnlyList<int[]> mask,
+        private static Color ImageDilateGetPixelValue(Bitmap sourceImage, int[][] mask,
             Point startingPoint)
         {
             var pixelValues = new List<int>();
-            var rows = mask.Count;
+            var rows = mask.Length;
             var columns = mask.First().Length;
-
+            
             for (var i = startingPoint.Y; i < startingPoint.Y + rows; i++)
             for (var j = startingPoint.X; j < startingPoint.X + columns; j++)
             {

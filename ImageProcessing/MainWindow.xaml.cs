@@ -297,6 +297,10 @@ namespace ImageProcessing
             }
             else if (selected == 3)
             {
+                if (!isMonochromatic)
+                {
+                    currentActiveImage = ImageProcess.Monochromatic(currentActiveImage);
+                }
                 int.TryParse(lineElementAngle.Text, out var lineAngel);
                 int.TryParse(lineElementLength.Text, out var lineLength);
                 var result = ImageProcess.ImageOpeningByLineElement(currentActiveImage, lineAngel, lineLength);

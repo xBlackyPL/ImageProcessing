@@ -275,9 +275,11 @@ namespace ImageProcessing
         public static Bitmap ImageErode(Bitmap sourceImage, int[][] structuralElement)
         {
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
+            var rows = structuralElement.Length;
+            var columns = structuralElement[0].Length;
 
-            for (var i = 0; i < sourceImage.Height - 1; i++)
-            for (var j = 0; j < sourceImage.Width - 1; j++)
+            for (var i = rows/2+1; i < sourceImage.Height - rows; i++)
+            for (var j = columns/2+1; j < sourceImage.Width - columns; j++)
             {
                 var centralPoint = new Point(j, i);
                 result.SetPixel(j, i, ImageErodeGetPixelValue(sourceImage, structuralElement, centralPoint));
@@ -289,14 +291,16 @@ namespace ImageProcessing
         public static Bitmap ImageDilate(Bitmap sourceImage, int[][] structuralElement)
         {
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
-            
-            for (var i = 0; i < sourceImage.Height - 1; i++)
-            for (var j = 0; j < sourceImage.Width - 1; j++)
+
+            var rows = structuralElement.Length;
+            var columns = structuralElement[0].Length;
+
+            for (var i = rows / 2 + 1; i < sourceImage.Height - rows; i++)
+            for (var j = columns / 2 + 1; j < sourceImage.Width - columns; j++)
             {
                 var centralPoint = new Point(j, i);
                 result.SetPixel(j, i, ImageDilateGetPixelValue(sourceImage, structuralElement, centralPoint));
             }
-
             return result;
         }
         
@@ -306,28 +310,13 @@ namespace ImageProcessing
             var rows = mask.Length;
             var columns = mask.First().Length;
 
-            for (var i = startingPoint.Y; i < startingPoint.Y + rows; i++)
-            for (var j = startingPoint.X; j < startingPoint.X + columns; j++)
+            for (var i = startingPoint.Y - rows/2; i <= startingPoint.Y + rows / 2; i++)
+            for (var j = startingPoint.X - columns/2; j <= startingPoint.X + columns / 2; j++)
             {
                 Color subtractedColor;
-                if (mask[i % rows][j % columns] != 1) continue;
+                if (mask[i - (startingPoint.Y - rows / 2)][j - (startingPoint.X - columns / 2)] != 1) continue;
 
-                if (j > sourceImage.Width - 1 && i > sourceImage.Height - 1)
-                    subtractedColor = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)),
-                        i - (i - (sourceImage.Height - 1)));
-                else if (j > sourceImage.Width - 1)
-                    subtractedColor = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)), i);
-                else if (i > sourceImage.Height - 1)
-                    subtractedColor = sourceImage.GetPixel(j, i - (i - (sourceImage.Height - 1)));
-                else if (i < rows && j < columns)
-                    subtractedColor = sourceImage.GetPixel(j + columns / 2, i + rows / 2);
-                else if (i < rows)
-                    subtractedColor = sourceImage.GetPixel(j, i + rows / 2);
-                else if (j < columns)
-                    subtractedColor = sourceImage.GetPixel(j + columns / 2, i);
-                else
-                    subtractedColor = sourceImage.GetPixel(j, i);
-
+                subtractedColor = sourceImage.GetPixel(j, i);
                 pixelValues.Add(subtractedColor.R);
             }
 
@@ -343,29 +332,14 @@ namespace ImageProcessing
             var pixelValues = new List<int>();
             var rows = mask.Length;
             var columns = mask.First().Length;
-            
-            for (var i = startingPoint.Y; i < startingPoint.Y + rows; i++)
-            for (var j = startingPoint.X; j < startingPoint.X + columns; j++)
+
+            for (var i = startingPoint.Y - rows / 2; i <= startingPoint.Y + rows / 2; i++)
+            for (var j = startingPoint.X - columns / 2; j <= startingPoint.X + columns / 2; j++)
             {
                 Color subtractedColor;
-                if (mask[i % rows][j % columns] != 1) continue;
+                if (mask[i - (startingPoint.Y - rows / 2)][j - (startingPoint.X - columns / 2)] != 1) continue;
 
-                if (j > sourceImage.Width - 1 && i > sourceImage.Height - 1)
-                    subtractedColor = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)),
-                        i - (i - (sourceImage.Height - 1)));
-                else if (j > sourceImage.Width - 1)
-                    subtractedColor = sourceImage.GetPixel(j - (j - (sourceImage.Width - 1)), i);
-                else if (i > sourceImage.Height - 1)
-                    subtractedColor = sourceImage.GetPixel(j, i - (i - (sourceImage.Height - 1)));
-                else if (i < rows && j < columns)
-                    subtractedColor = sourceImage.GetPixel(j + columns / 2, i + rows / 2);
-                else if (i < rows)
-                    subtractedColor = sourceImage.GetPixel(j, i + rows / 2);
-                else if (j < columns)
-                    subtractedColor = sourceImage.GetPixel(j + columns / 2, i);
-                else
-                    subtractedColor = sourceImage.GetPixel(j, i);
-
+                subtractedColor = sourceImage.GetPixel(j, i);
                 pixelValues.Add(subtractedColor.R);
             }
 

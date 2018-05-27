@@ -187,7 +187,7 @@ namespace ImageProcessing
             return newColor;
         }
 
-        public static Bitmap ImageOpeningByLineElement(Bitmap sourceImage, int angle, int size)
+        public static Bitmap ImageOpeningByLineStructuralElement(Bitmap sourceImage, int angle, int size)
         {
             var structElement = LineStructuralElementGenerator(angle, size);
 

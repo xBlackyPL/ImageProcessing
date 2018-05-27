@@ -303,7 +303,7 @@ namespace ImageProcessing
                 }
                 int.TryParse(lineElementAngle.Text, out var lineAngel);
                 int.TryParse(lineElementLength.Text, out var lineLength);
-                var result = ImageProcess.ImageOpeningByLineElement(currentActiveImage, lineAngel, lineLength);
+                var result = ImageProcess.ImageOpeningByLineStructuralElement(currentActiveImage, lineAngel, lineLength);
                 Img.Source = Convert(result);
                 currentActiveImage = result;
             }

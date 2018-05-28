@@ -23,15 +23,15 @@ namespace ImageProcessing
 
         public static Bitmap Monochromatic(Bitmap sourceImage)
         {
-            var result = new Bitmap(sourceImage.Width,sourceImage.Height);
+            var result = new Bitmap(sourceImage.Width, sourceImage.Height);
 
             for (var i = 0; i < sourceImage.Height - 1; i++)
             for (var j = 0; j < sourceImage.Width - 1; j++)
             {
                 var pixel = sourceImage.GetPixel(j, i);
-                var colorValue = (int)(0.3 * pixel.R + 0.6 * pixel.G + 0.1 * pixel.B);
+                var colorValue = (int) (0.3 * pixel.R + 0.6 * pixel.G + 0.1 * pixel.B);
                 var newColor = Color.FromArgb(colorValue, colorValue, colorValue);
-                result.SetPixel(j,i,newColor);
+                result.SetPixel(j, i, newColor);
             }
 
             return result;
@@ -61,18 +61,39 @@ namespace ImageProcessing
             return histogramCumulant;
         }
 
+        private static double[] GaussValuesPerColor(double stdDeviation)
+        {
+            var gaussValues = new double[256];
+            double sum = 0.0;
+
+            for (var i = 0; i < 256; i++)
+            {
+                gaussValues[i] = Math.Exp((-1)*((((double)i - 0.5) * ((double)i - 0.5)) /
+                                          (2 * (stdDeviation * stdDeviation))));
+
+            }
+
+
+
+            return gaussValues;
+        }
+
         public static Bitmap ImageHistogramGaussNormalizationMonochromatic(Bitmap sourceImage, double stdDeviation)
         {
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
             var sourceHistogram = GetImageHistogramMonochromatic(sourceImage);
             var sourceHistogramCumulant = GetHistogramCumulant(sourceHistogram);
+            var gaussValuesForEachColor = GaussValuesPerColor(stdDeviation);
 
-            var numberOfColorClasses = 32;
-
-            for (var i = 0; i < 256; i++)
+            foreach (var element in gaussValuesForEachColor)
             {
+                Console.WriteLine(element);
             }
 
+
+            var numberOfColorClasses = 16;
+
+            
             return result;
         }
 
@@ -278,8 +299,8 @@ namespace ImageProcessing
             var rows = structuralElement.Length;
             var columns = structuralElement[0].Length;
 
-            for (var i = rows/2+1; i < sourceImage.Height - rows; i++)
-            for (var j = columns/2+1; j < sourceImage.Width - columns; j++)
+            for (var i = rows / 2 + 1; i < sourceImage.Height - rows; i++)
+            for (var j = columns / 2 + 1; j < sourceImage.Width - columns; j++)
             {
                 var centralPoint = new Point(j, i);
                 result.SetPixel(j, i, ImageErodeGetPixelValue(sourceImage, structuralElement, centralPoint));
@@ -301,17 +322,18 @@ namespace ImageProcessing
                 var centralPoint = new Point(j, i);
                 result.SetPixel(j, i, ImageDilateGetPixelValue(sourceImage, structuralElement, centralPoint));
             }
+
             return result;
         }
-        
+
         private static Color ImageErodeGetPixelValue(Bitmap sourceImage, int[][] mask, Point startingPoint)
         {
             var pixelValues = new List<int>();
             var rows = mask.Length;
             var columns = mask.First().Length;
 
-            for (var i = startingPoint.Y - rows/2; i <= startingPoint.Y + rows / 2; i++)
-            for (var j = startingPoint.X - columns/2; j <= startingPoint.X + columns / 2; j++)
+            for (var i = startingPoint.Y - rows / 2; i <= startingPoint.Y + rows / 2; i++)
+            for (var j = startingPoint.X - columns / 2; j <= startingPoint.X + columns / 2; j++)
             {
                 Color subtractedColor;
                 if (mask[i - (startingPoint.Y - rows / 2)][j - (startingPoint.X - columns / 2)] != 1) continue;

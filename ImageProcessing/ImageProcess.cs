@@ -50,13 +50,14 @@ namespace ImageProcessing
             return histogram;
         }
 
-        private static int[] GetHistogramCumulant(int[] sourceHistogram)
+        private static double[] GetHistogramCumulant(int[] sourceHistogram)
         {
-            var histogramCumulant = new int[256];
+            var histogramCumulant = new double[256];
             histogramCumulant[0] = sourceHistogram[0];
 
             for (var i = 1; i < sourceHistogram.Length; i++)
                 histogramCumulant[i] = sourceHistogram[i] + histogramCumulant[i - 1];
+
 
             return histogramCumulant;
         }
@@ -64,16 +65,11 @@ namespace ImageProcessing
         private static double[] GaussValuesPerColor(double stdDeviation)
         {
             var gaussValues = new double[256];
-            double sum = 0.0;
 
             for (var i = 0; i < 256; i++)
-            {
-                gaussValues[i] = Math.Exp((-1)*((((double)i - 0.5) * ((double)i - 0.5)) /
-                                          (2 * (stdDeviation * stdDeviation))));
-
-            }
-
-
+                gaussValues[i] = 1 / (stdDeviation * Math.Sqrt(2 * Math.PI)) *
+                                 Math.Exp(-((i / 255.0 - 0.5) * (i / 255.0 - 0.5)) /
+                                          (2 * (stdDeviation * stdDeviation)));
 
             return gaussValues;
         }
@@ -83,17 +79,64 @@ namespace ImageProcessing
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
             var sourceHistogram = GetImageHistogramMonochromatic(sourceImage);
             var sourceHistogramCumulant = GetHistogramCumulant(sourceHistogram);
-            var gaussValuesForEachColor = GaussValuesPerColor(stdDeviation);
 
-            foreach (var element in gaussValuesForEachColor)
+            double pixels = sourceImage.Width * sourceImage.Height;
+
+            for (var i = 0; i < sourceHistogramCumulant.Length; i++) sourceHistogramCumulant[i] /= pixels;
+
+            var gaussValuesForEachColor = GaussValuesPerColor(stdDeviation);
+            var numberOfColorClasses = 8;
+
+            var newPixelValues = new int[256];
+            var classBorder = new double[numberOfColorClasses];
+            var index = 0;
+            var classNumber = 0;
+            double area = 0;
+            const double step = 1 / 255.0;
+            var totalArea = 0.0;
+
+            for (var i = 0; i < 256; i++) totalArea += gaussValuesForEachColor[i] * step;
+
+            while (index < 256)
             {
-                Console.WriteLine(element);
+                area += gaussValuesForEachColor[index] * step;
+                if (area < totalArea * (classNumber + 1) / numberOfColorClasses)
+                {
+                    index++;
+                    continue;
+                }
+
+                if (classNumber == numberOfColorClasses) break;
+                classBorder[classNumber++] = (double) index / 255;
             }
 
+            classBorder[numberOfColorClasses - 1] = 1;
 
-            var numberOfColorClasses = 16;
+            index = 0;
+            var pixelValue = 0;
+            for (var i = 0; i < numberOfColorClasses; i++)
+            {
+                pixelValue = index;
+                while (index < 255)
+                {
+                    if (sourceHistogramCumulant[index] <= classBorder[i])
+                    {
+                        newPixelValues[index++] = pixelValue;
+                        continue;
+                    }
 
-            
+                    break;
+                }
+            }
+
+            for (var i = 0; i < sourceImage.Height - 1; i++)
+            for (var j = 0; j < sourceImage.Width - 1; j++)
+            {
+                var sourcePixelValue = sourceImage.GetPixel(j, i);
+                var newPixelValue = newPixelValues[sourcePixelValue.R];
+                result.SetPixel(j, i, Color.FromArgb(newPixelValue, newPixelValue, newPixelValue));
+            }
+
             return result;
         }
 

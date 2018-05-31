@@ -40,9 +40,9 @@ namespace ImageProcessingApp
         public static Bitmap CopyImage(Bitmap sourceImage)
         {
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
-            for(var i = 0; i < sourceImage.Height - 1; i++)
+            for (var i = 0; i < sourceImage.Height - 1; i++)
             for (var j = 0; j < sourceImage.Width - 1; j++)
-                result.SetPixel(j,i,sourceImage.GetPixel(j, i));
+                result.SetPixel(j, i, sourceImage.GetPixel(j, i));
 
             return result;
         }
@@ -544,6 +544,72 @@ namespace ImageProcessingApp
             var newColor = Color.FromArgb(pixelValues.Last(), pixelValues.Last(), pixelValues.Last());
 
             return newColor;
+        }
+
+        public static Bitmap FillHoles(Bitmap sourceImage)
+        {
+            var result = CopyImage(sourceImage);
+
+            for (var i = 0; i < result.Height; i++)
+            {
+                if (result.GetPixel(0, i).Equals(Color.FromArgb(255,0,0,0)))
+                    markPixel(new Point(0, i), result);
+
+                if (result.GetPixel(result.Width - 1, i).Equals(Color.FromArgb(255, 0, 0, 0)))
+                    markPixel(new Point(result.Width - 1, i), result);
+            }
+
+            for (var i = 0; i < result.Width - 1; i++)
+            {
+                if (result.GetPixel(i, 0).Equals(Color.FromArgb(255, 0, 0, 0))) markPixel(new Point(i, 0), result);
+
+                if (result.GetPixel(i, result.Height - 1).Equals(Color.FromArgb(255, 0, 0, 0)))
+                    markPixel(new Point(i, result.Height - 1), result);
+            }
+
+            for (var i = 0; i < result.Height - 1; i++)
+            for (var j = 0; j < result.Width - 1; j++)
+                if (result.GetPixel(j, i).Equals(Color.FromArgb(255, 0, 255, 0)))
+                    result.SetPixel(j, i, Color.Black);
+                else if (result.GetPixel(j, i).Equals(Color.FromArgb(255, 0, 0, 0))) result.SetPixel(j, i, Color.White);
+            
+            return result;
+        }
+
+        private static void markPixel(Point startingPoint, Bitmap image)
+        {
+            image.SetPixel(startingPoint.X, startingPoint.Y, Color.FromArgb(255,0,255,0));
+            var queue = new Queue<Point>();
+            queue.Enqueue(startingPoint);
+
+            while (queue.Count > 0)
+            {
+                var newPoint = queue.Dequeue();
+
+                if (newPoint.X > 0 && image.GetPixel(newPoint.X - 1, newPoint.Y).Equals(Color.FromArgb(255, 0, 0, 0)))
+                {
+                    image.SetPixel(newPoint.X - 1, newPoint.Y, Color.FromArgb(255, 0, 255, 0));
+                    queue.Enqueue(new Point(newPoint.X - 1, newPoint.Y));
+                }
+
+                if (newPoint.X + 1 < image.Width - 1 && image.GetPixel(newPoint.X + 1, newPoint.Y).Equals(Color.FromArgb(255, 0, 0, 0)))
+                {
+                    image.SetPixel(newPoint.X + 1, newPoint.Y, Color.FromArgb(255, 0, 255, 0));
+                    queue.Enqueue(new Point(newPoint.X + 1, newPoint.Y));
+                }
+
+                if (newPoint.Y > 0 && image.GetPixel(newPoint.X, newPoint.Y - 1).Equals(Color.FromArgb(255, 0, 0, 0)))
+                {
+                    image.SetPixel(newPoint.X, newPoint.Y - 1, Color.FromArgb(255, 0, 255, 0));
+                    queue.Enqueue(new Point(newPoint.X , newPoint.Y - 1));
+                }
+
+                if (newPoint.Y + 1 < image.Height - 1 && image.GetPixel(newPoint.X, newPoint.Y + 1).Equals(Color.FromArgb(255, 0, 0, 0)))
+                {
+                    image.SetPixel(newPoint.X, newPoint.Y + 1, Color.FromArgb(255, 0, 255, 0));
+                    queue.Enqueue(new Point(newPoint.X, newPoint.Y + 1));
+                }
+            }
         }
     }
 }

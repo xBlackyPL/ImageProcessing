@@ -311,6 +311,14 @@ namespace ImageProcessingApp
             }
             else if (selected == 4)
             {
+                if (!isMonochromatic)
+                {
+                    currentActiveImage = ImageProcessing.Monochromatic(currentActiveImage);
+                    isMonochromatic = true;
+                }
+                var result = ImageProcessing.FillHoles(currentActiveImage);
+                Img.Source = Convert(result);
+                currentActiveImage = result;
             }
             else if (selected == 0)
             {
@@ -329,5 +337,7 @@ namespace ImageProcessingApp
             currentActiveImage = ImageProcessing.CopyImage(imageWithoutChanges);
             Img.Source = Convert(currentActiveImage);
         }
+
+
     }
 }

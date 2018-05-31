@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 
-namespace ImageProcessing
+namespace ImageProcessingApp
 {
-    internal class ImageProcess
+    internal class ImageProcessing
     {
         public static bool MonochromaticValidation(Bitmap sourceImage)
         {
@@ -37,20 +37,48 @@ namespace ImageProcessing
             return result;
         }
 
-        public static int[] GetImageHistogramMonochromatic(Bitmap sourceImage)
+        public static Bitmap CopyImage(Bitmap sourceImage)
+        {
+            var result = new Bitmap(sourceImage.Width, sourceImage.Height);
+            for(var i = 0; i < sourceImage.Height - 1; i++)
+            for (var j = 0; j < sourceImage.Width - 1; j++)
+                result.SetPixel(j,i,sourceImage.GetPixel(j, i));
+
+            return result;
+        }
+
+        public static int[] GetImageHistogram(Bitmap sourceImage, char layer)
         {
             var histogram = new int[256];
             for (var i = 0; i < sourceImage.Height; i++)
             for (var j = 0; j < sourceImage.Width; j++)
             {
                 var pixel = sourceImage.GetPixel(j, i);
-                histogram[pixel.R]++;
+                switch (layer)
+                {
+                    case 'R':
+                    case 'r':
+                        histogram[pixel.R]++;
+                        break;
+                    case 'G':
+                    case 'g':
+                        histogram[pixel.G]++;
+                        break;
+
+                    case 'B':
+                    case 'b':
+                        histogram[pixel.B]++;
+                        break;
+                    default:
+                        Console.WriteLine(@"Invalide use of GetImageHistogram, invalid layer parameter");
+                        return histogram;
+                }
             }
 
             return histogram;
         }
 
-        private static double[] GetHistogramCumulant(int[] sourceHistogram)
+        private static double[] GetHistogramCumulant(int[] sourceHistogram, double normalization)
         {
             var histogramCumulant = new double[256];
             histogramCumulant[0] = sourceHistogram[0];
@@ -58,6 +86,8 @@ namespace ImageProcessing
             for (var i = 1; i < sourceHistogram.Length; i++)
                 histogramCumulant[i] = sourceHistogram[i] + histogramCumulant[i - 1];
 
+            for (var i = 0; i < sourceHistogram.Length; i++)
+                histogramCumulant[i] /= normalization;
 
             return histogramCumulant;
         }
@@ -74,18 +104,20 @@ namespace ImageProcessing
             return gaussValues;
         }
 
-        public static Bitmap ImageHistogramGaussNormalizationMonochromatic(Bitmap sourceImage, double stdDeviation)
+        public static Bitmap ImageHistogramGaussNormalizationMonochromatic(Bitmap sourceImage, double stdDeviation,
+            int numberOfColorClasses)
         {
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
-            var sourceHistogram = GetImageHistogramMonochromatic(sourceImage);
-            var sourceHistogramCumulant = GetHistogramCumulant(sourceHistogram);
-
+            /*
+             * In case of monochromatic there is no need to specify exact layer.
+             *  GetImageHistogram(sourceImage, 'R');
+             *  GetImageHistogram(sourceImage, 'G');
+             *  GetImageHistogram(sourceImage, 'B');             
+             */
             double pixels = sourceImage.Width * sourceImage.Height;
-
-            for (var i = 0; i < sourceHistogramCumulant.Length; i++) sourceHistogramCumulant[i] /= pixels;
-
+            var sourceHistogram = GetImageHistogram(sourceImage, 'R');
+            var sourceHistogramCumulant = GetHistogramCumulant(sourceHistogram, pixels);
             var gaussValuesForEachColor = GaussValuesPerColor(stdDeviation);
-            var numberOfColorClasses = 8;
 
             var newPixelValues = new int[256];
             var classBorder = new double[numberOfColorClasses];
@@ -140,9 +172,109 @@ namespace ImageProcessing
             return result;
         }
 
-        public static Bitmap ImageHistogramGaussianNormalizationRGB(Bitmap sourceImage, double stdDeviation)
+        public static Bitmap ImageHistogramGaussianNormalizationRGB(Bitmap sourceImage, double stdDeviation,
+            int numberOfColorClasses)
         {
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
+
+            var sourceHistogramR = GetImageHistogram(sourceImage, 'R');
+            var sourceHistogramG = GetImageHistogram(sourceImage, 'G');
+            var sourceHistogramB = GetImageHistogram(sourceImage, 'B');
+
+            double pixels = sourceImage.Width * sourceImage.Height;
+
+            var sourceHistogramCumulantR = GetHistogramCumulant(sourceHistogramR, pixels);
+            var sourceHistogramCumulantG = GetHistogramCumulant(sourceHistogramG, pixels);
+            var sourceHistogramCumulantB = GetHistogramCumulant(sourceHistogramB, pixels);
+
+            var gaussValuesForEachColor = GaussValuesPerColor(stdDeviation);
+
+            var newPixelValuesR = new int[256];
+            var newPixelValuesG = new int[256];
+            var newPixelValuesB = new int[256];
+            var classBorder = new double[numberOfColorClasses];
+            var index = 0;
+            var classNumber = 0;
+            double area = 0;
+            const double step = 1 / 255.0;
+            var totalArea = 0.0;
+
+            for (var i = 0; i < 256; i++) totalArea += gaussValuesForEachColor[i] * step;
+
+            while (index < 256)
+            {
+                area += gaussValuesForEachColor[index] * step;
+                if (area < totalArea * (classNumber + 1) / numberOfColorClasses)
+                {
+                    index++;
+                    continue;
+                }
+
+                if (classNumber == numberOfColorClasses) break;
+                classBorder[classNumber++] = (double) index / 255;
+            }
+
+            classBorder[numberOfColorClasses - 1] = 1;
+
+            index = 0;
+            var pixelValue = 0;
+            for (var i = 0; i < numberOfColorClasses; i++)
+            {
+                pixelValue = index;
+                while (index < 255)
+                {
+                    if (sourceHistogramCumulantR[index] <= classBorder[i])
+                    {
+                        newPixelValuesR[index++] = pixelValue;
+                        continue;
+                    }
+
+                    break;
+                }
+            }
+
+            index = 0;
+            for (var i = 0; i < numberOfColorClasses; i++)
+            {
+                pixelValue = index;
+                while (index < 255)
+                {
+                    if (sourceHistogramCumulantG[index] <= classBorder[i])
+                    {
+                        newPixelValuesG[index++] = pixelValue;
+                        continue;
+                    }
+
+                    break;
+                }
+            }
+
+            index = 0;
+            for (var i = 0; i < numberOfColorClasses; i++)
+            {
+                pixelValue = index;
+                while (index < 255)
+                {
+                    if (sourceHistogramCumulantB[index] <= classBorder[i])
+                    {
+                        newPixelValuesB[index++] = pixelValue;
+                        continue;
+                    }
+
+                    break;
+                }
+            }
+
+            for (var i = 0; i < sourceImage.Height - 1; i++)
+            for (var j = 0; j < sourceImage.Width - 1; j++)
+            {
+                var sourcePixelValue = sourceImage.GetPixel(j, i);
+                var newPixelValueR = newPixelValuesR[sourcePixelValue.R];
+                var newPixelValueG = newPixelValuesR[sourcePixelValue.G];
+                var newPixelValueB = newPixelValuesR[sourcePixelValue.B];
+                result.SetPixel(j, i, Color.FromArgb(newPixelValueR, newPixelValueG, newPixelValueB));
+            }
+
             return result;
         }
 

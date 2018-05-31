@@ -9,11 +9,12 @@ using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using Microsoft.Win32;
 
-namespace ImageProcessing
+namespace ImageProcessingApp
 {
     public partial class MainWindow : Window
     {
         private Bitmap currentActiveImage;
+        private Bitmap imageWithoutChanges;
         private bool fileHasBeenSaved = true;
         private bool isMonochromatic;
         private TextBox lineElementAngle;
@@ -61,9 +62,8 @@ namespace ImageProcessing
                         currentActiveImage = new Bitmap(fileName);
                         Img.Source = new BitmapImage(new Uri(fileName));
                         SaveImageMenuItem.IsEnabled = true;
-                        RecentlyOpenedMenuItem.IsEnabled = true;
                         fileHasBeenSaved = false;
-                        isMonochromatic = ImageProcess.MonochromaticValidation(currentActiveImage);
+                        isMonochromatic = ImageProcessing.MonochromaticValidation(currentActiveImage);
                     }
                     catch (NotSupportedException)
                     {
@@ -85,9 +85,8 @@ namespace ImageProcessing
                         currentActiveImage = new Bitmap(fileName);
                         Img.Source = new BitmapImage(new Uri(fileName));
                         SaveImageMenuItem.IsEnabled = true;
-                        RecentlyOpenedMenuItem.IsEnabled = true;
                         fileHasBeenSaved = false;
-                        isMonochromatic = ImageProcess.MonochromaticValidation(currentActiveImage);
+                        isMonochromatic = ImageProcessing.MonochromaticValidation(currentActiveImage);
                     }
                     catch (NotSupportedException)
                     {
@@ -102,12 +101,14 @@ namespace ImageProcessing
             }
 
             Apply.IsEnabled = true;
+            imageWithoutChanges = ImageProcessing.CopyImage(currentActiveImage);
+            Revert.IsEnabled = true;
         }
 
         private void Exit_MenuItemClick(object sender, RoutedEventArgs e)
         {
             if (!fileHasBeenSaved)
-                if (MessageBox.Show("Chcesz wyjść bez zapisania pliku?", "Wyjście bez zapisu",
+                if (MessageBox.Show("Do you want to exit without saving image?", "Exit without saving",
                         MessageBoxButton.YesNo) == MessageBoxResult.Yes)
                     Application.Current.Shutdown();
                 else
@@ -247,12 +248,12 @@ namespace ImageProcessing
                 if (isMonochromatic)
                 {
                     var result =
-                        ImageProcess.ImageHistogramGaussNormalizationMonochromatic(currentActiveImage, stdDeviation);
+                        ImageProcessing.ImageHistogramGaussNormalizationMonochromatic(currentActiveImage, stdDeviation, 8);
                     Img.Source = Convert(result);
                 }
                 else
                 {
-                    var result = ImageProcess.ImageHistogramGaussianNormalizationRGB(currentActiveImage, stdDeviation);
+                    var result = ImageProcessing.ImageHistogramGaussianNormalizationRGB(currentActiveImage, stdDeviation, 8);
                     Img.Source = Convert(result);
                 }
             }
@@ -284,13 +285,13 @@ namespace ImageProcessing
 
                 if (isMonochromatic)
                 {
-                    var result = ImageProcess.ImageOrdfilt2Monochromatic(currentActiveImage, maskSize, orderNumber);
+                    var result = ImageProcessing.ImageOrdfilt2Monochromatic(currentActiveImage, maskSize, orderNumber);
                     Img.Source = Convert(result);
                     currentActiveImage = result;
                 }
                 else
                 {
-                    var result = ImageProcess.ImageOrdfilt2RBG(currentActiveImage, maskSize, orderNumber);
+                    var result = ImageProcessing.ImageOrdfilt2RBG(currentActiveImage, maskSize, orderNumber);
                     Img.Source = Convert(result);
                     currentActiveImage = result;
                 }
@@ -299,11 +300,12 @@ namespace ImageProcessing
             {
                 if (!isMonochromatic)
                 {
-                    currentActiveImage = ImageProcess.Monochromatic(currentActiveImage);
+                    currentActiveImage = ImageProcessing.Monochromatic(currentActiveImage);
+                    isMonochromatic = true;
                 }
                 int.TryParse(lineElementAngle.Text, out var lineAngel);
                 int.TryParse(lineElementLength.Text, out var lineLength);
-                var result = ImageProcess.ImageOpeningByLineStructuralElement(currentActiveImage, lineAngel, lineLength);
+                var result = ImageProcessing.ImageOpeningByLineStructuralElement(currentActiveImage, lineAngel, lineLength);
                 Img.Source = Convert(result);
                 currentActiveImage = result;
             }
@@ -320,6 +322,12 @@ namespace ImageProcessing
                     MessageBox.Show("Unknown Error", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 if (messageBoxResult == MessageBoxResult.OK) Application.Current.Shutdown();
             }
+        }
+
+        private void Revert_Click(object sender, RoutedEventArgs e)
+        {
+            currentActiveImage = ImageProcessing.CopyImage(imageWithoutChanges);
+            Img.Source = Convert(currentActiveImage);
         }
     }
 }

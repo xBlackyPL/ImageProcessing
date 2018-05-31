@@ -550,21 +550,21 @@ namespace ImageProcessingApp
         {
             var result = CopyImage(sourceImage);
 
-            for (var i = 0; i < result.Height; i++)
+            for (var i = 0; i < result.Height - 1; i++)
             {
                 if (result.GetPixel(0, i).Equals(Color.FromArgb(255,0,0,0)))
-                    markPixel(new Point(0, i), result);
+                    FloodPixels(new Point(0, i), result);
 
                 if (result.GetPixel(result.Width - 1, i).Equals(Color.FromArgb(255, 0, 0, 0)))
-                    markPixel(new Point(result.Width - 1, i), result);
+                    FloodPixels(new Point(result.Width - 1, i), result);
             }
 
             for (var i = 0; i < result.Width - 1; i++)
             {
-                if (result.GetPixel(i, 0).Equals(Color.FromArgb(255, 0, 0, 0))) markPixel(new Point(i, 0), result);
+                if (result.GetPixel(i, 0).Equals(Color.FromArgb(255, 0, 0, 0))) FloodPixels(new Point(i, 0), result);
 
                 if (result.GetPixel(i, result.Height - 1).Equals(Color.FromArgb(255, 0, 0, 0)))
-                    markPixel(new Point(i, result.Height - 1), result);
+                    FloodPixels(new Point(i, result.Height - 1), result);
             }
 
             for (var i = 0; i < result.Height - 1; i++)
@@ -576,7 +576,7 @@ namespace ImageProcessingApp
             return result;
         }
 
-        private static void markPixel(Point startingPoint, Bitmap image)
+        private static void FloodPixels(Point startingPoint, Bitmap image)
         {
             image.SetPixel(startingPoint.X, startingPoint.Y, Color.FromArgb(255,0,255,0));
             var queue = new Queue<Point>();

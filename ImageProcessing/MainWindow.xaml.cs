@@ -316,7 +316,7 @@ namespace ImageProcessingApp
                     currentActiveImage = ImageProcessing.Monochromatic(currentActiveImage);
                     isMonochromatic = true;
                 }
-                var result = ImageProcessing.FillHoles(currentActiveImage);
+                var result = ImageProcessing.ImageFillHoles(currentActiveImage);
                 Img.Source = Convert(result);
                 currentActiveImage = result;
             }

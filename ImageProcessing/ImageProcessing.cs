@@ -108,18 +108,9 @@ namespace ImageProcessingApp
             int numberOfColorClasses)
         {
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
-            /*
-             * In case of monochromatic there is no need to specify exact layer.
-             *  GetImageHistogram(sourceImage, 'R');
-             *  GetImageHistogram(sourceImage, 'G');
-             *  GetImageHistogram(sourceImage, 'B');             
-             */
             double pixels = sourceImage.Width * sourceImage.Height;
-            var sourceHistogram = GetImageHistogram(sourceImage, 'R');
-            var sourceHistogramCumulant = GetHistogramCumulant(sourceHistogram, pixels);
             var gaussValuesForEachColor = GaussValuesPerColor(stdDeviation);
 
-            var newPixelValues = new int[256];
             var classBorder = new double[numberOfColorClasses];
             var index = 0;
             var classNumber = 0;
@@ -143,23 +134,8 @@ namespace ImageProcessingApp
             }
 
             classBorder[numberOfColorClasses - 1] = 1;
-
-            index = 0;
-            var pixelValue = 0;
-            for (var i = 0; i < numberOfColorClasses; i++)
-            {
-                pixelValue = index;
-                while (index < 255)
-                {
-                    if (sourceHistogramCumulant[index] <= classBorder[i])
-                    {
-                        newPixelValues[index++] = pixelValue;
-                        continue;
-                    }
-
-                    break;
-                }
-            }
+            var newPixelValues = newPixelValuesHistogramEqualization(numberOfColorClasses, classBorder,
+                GetHistogramCumulant(GetImageHistogram(sourceImage, 'R'), pixels));
 
             for (var i = 0; i < sourceImage.Height - 1; i++)
             for (var j = 0; j < sourceImage.Width - 1; j++)
@@ -176,22 +152,10 @@ namespace ImageProcessingApp
             int numberOfColorClasses)
         {
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
-
-            var sourceHistogramR = GetImageHistogram(sourceImage, 'R');
-            var sourceHistogramG = GetImageHistogram(sourceImage, 'G');
-            var sourceHistogramB = GetImageHistogram(sourceImage, 'B');
-
             double pixels = sourceImage.Width * sourceImage.Height;
-
-            var sourceHistogramCumulantR = GetHistogramCumulant(sourceHistogramR, pixels);
-            var sourceHistogramCumulantG = GetHistogramCumulant(sourceHistogramG, pixels);
-            var sourceHistogramCumulantB = GetHistogramCumulant(sourceHistogramB, pixels);
-
             var gaussValuesForEachColor = GaussValuesPerColor(stdDeviation);
 
-            var newPixelValuesR = new int[256];
-            var newPixelValuesG = new int[256];
-            var newPixelValuesB = new int[256];
+
             var classBorder = new double[numberOfColorClasses];
             var index = 0;
             var classNumber = 0;
@@ -216,66 +180,51 @@ namespace ImageProcessingApp
 
             classBorder[numberOfColorClasses - 1] = 1;
 
-            index = 0;
-            var pixelValue = 0;
-            for (var i = 0; i < numberOfColorClasses; i++)
-            {
-                pixelValue = index;
-                while (index < 255)
-                {
-                    if (sourceHistogramCumulantR[index] <= classBorder[i])
-                    {
-                        newPixelValuesR[index++] = pixelValue;
-                        continue;
-                    }
-
-                    break;
-                }
-            }
-
-            index = 0;
-            for (var i = 0; i < numberOfColorClasses; i++)
-            {
-                pixelValue = index;
-                while (index < 255)
-                {
-                    if (sourceHistogramCumulantG[index] <= classBorder[i])
-                    {
-                        newPixelValuesG[index++] = pixelValue;
-                        continue;
-                    }
-
-                    break;
-                }
-            }
-
-            index = 0;
-            for (var i = 0; i < numberOfColorClasses; i++)
-            {
-                pixelValue = index;
-                while (index < 255)
-                {
-                    if (sourceHistogramCumulantB[index] <= classBorder[i])
-                    {
-                        newPixelValuesB[index++] = pixelValue;
-                        continue;
-                    }
-
-                    break;
-                }
-            }
+            var newPixelValuesR =
+                newPixelValuesHistogramEqualization(numberOfColorClasses, classBorder,
+                    GetHistogramCumulant(GetImageHistogram(sourceImage, 'R'), pixels));
+            var newPixelValuesG =
+                newPixelValuesHistogramEqualization(numberOfColorClasses, classBorder,
+                    GetHistogramCumulant(GetImageHistogram(sourceImage, 'G'), pixels));
+            var newPixelValuesB =
+                newPixelValuesHistogramEqualization(numberOfColorClasses, classBorder,
+                    GetHistogramCumulant(GetImageHistogram(sourceImage, 'B'), pixels));
 
             for (var i = 0; i < sourceImage.Height - 1; i++)
             for (var j = 0; j < sourceImage.Width - 1; j++)
             {
                 var sourcePixelValue = sourceImage.GetPixel(j, i);
                 var newPixelValueR = newPixelValuesR[sourcePixelValue.R];
-                var newPixelValueG = newPixelValuesR[sourcePixelValue.G];
-                var newPixelValueB = newPixelValuesR[sourcePixelValue.B];
+                var newPixelValueG = newPixelValuesG[sourcePixelValue.G];
+                var newPixelValueB = newPixelValuesB[sourcePixelValue.B];
                 result.SetPixel(j, i, Color.FromArgb(newPixelValueR, newPixelValueG, newPixelValueB));
             }
 
             return result;
+        }
+
+        private static int[] newPixelValuesHistogramEqualization(int numberOfColorClasses, double[] classBorder,
+            double[] sourceHistogramCumulant)
+        {
+            var index = 0;
+            var newPixelValues = new int[sourceHistogramCumulant.Length];
+
+            for (var i = 0; i < numberOfColorClasses; i++)
+            {
+                var pixelValue = index;
+                while (index < 255)
+                {
+                    if (sourceHistogramCumulant[index] <= classBorder[i])
+                    {
+                        newPixelValues[index++] = pixelValue;
+                        continue;
+                    }
+
+                    break;
+                }
+            }
+
+            return newPixelValues;
         }
 
         public static Bitmap ImageOrdfilt2Monochromatic(Bitmap sourceImage, int maskSize, int orderNumber)
@@ -305,7 +254,6 @@ namespace ImageProcessingApp
 
             return result;
         }
-
 
         private static Color Ordfilt2GetColorMonochromatic(Bitmap sourceImage, int maskSize, int orderNumber,
             Point startingPoint)
@@ -386,15 +334,7 @@ namespace ImageProcessingApp
         public static Bitmap ImageOpeningByLineStructuralElement(Bitmap sourceImage, int angle, int size)
         {
             var structElement = LineStructuralElementGenerator(angle, size);
-
-            foreach (var row in structElement)
-            {
-                foreach (var element in row) Console.Write(element + " ");
-                Console.WriteLine();
-            }
-
-            var result = ImageErode(sourceImage, structElement);
-            result = ImageDilate(result, structElement);
+            var result = ImageDilate(ImageErode(sourceImage, structElement), structElement);
             return result;
         }
 
@@ -476,10 +416,7 @@ namespace ImageProcessingApp
 
             for (var i = rows / 2 + 1; i < sourceImage.Height - rows; i++)
             for (var j = columns / 2 + 1; j < sourceImage.Width - columns; j++)
-            {
-                var centralPoint = new Point(j, i);
-                result.SetPixel(j, i, ImageErodeGetPixelValue(sourceImage, structuralElement, centralPoint));
-            }
+                result.SetPixel(j, i, ImageErodeGetPixelValue(sourceImage, structuralElement, new Point(j, i)));
 
             return result;
         }
@@ -493,10 +430,7 @@ namespace ImageProcessingApp
 
             for (var i = rows / 2 + 1; i < sourceImage.Height - rows; i++)
             for (var j = columns / 2 + 1; j < sourceImage.Width - columns; j++)
-            {
-                var centralPoint = new Point(j, i);
-                result.SetPixel(j, i, ImageDilateGetPixelValue(sourceImage, structuralElement, centralPoint));
-            }
+                result.SetPixel(j, i, ImageDilateGetPixelValue(sourceImage, structuralElement, new Point(j, i)));
 
             return result;
         }
@@ -510,11 +444,9 @@ namespace ImageProcessingApp
             for (var i = startingPoint.Y - rows / 2; i <= startingPoint.Y + rows / 2; i++)
             for (var j = startingPoint.X - columns / 2; j <= startingPoint.X + columns / 2; j++)
             {
-                Color subtractedColor;
                 if (mask[i - (startingPoint.Y - rows / 2)][j - (startingPoint.X - columns / 2)] != 1) continue;
 
-                subtractedColor = sourceImage.GetPixel(j, i);
-                pixelValues.Add(subtractedColor.R);
+                pixelValues.Add(sourceImage.GetPixel(j, i).R);
             }
 
             pixelValues.Sort();
@@ -533,11 +465,8 @@ namespace ImageProcessingApp
             for (var i = startingPoint.Y - rows / 2; i <= startingPoint.Y + rows / 2; i++)
             for (var j = startingPoint.X - columns / 2; j <= startingPoint.X + columns / 2; j++)
             {
-                Color subtractedColor;
                 if (mask[i - (startingPoint.Y - rows / 2)][j - (startingPoint.X - columns / 2)] != 1) continue;
-
-                subtractedColor = sourceImage.GetPixel(j, i);
-                pixelValues.Add(subtractedColor.R);
+                pixelValues.Add(sourceImage.GetPixel(j, i).R);
             }
 
             pixelValues.Sort();
@@ -546,25 +475,26 @@ namespace ImageProcessingApp
             return newColor;
         }
 
-        public static Bitmap FillHoles(Bitmap sourceImage)
+        public static Bitmap ImageFillHoles(Bitmap sourceImage)
         {
             var result = CopyImage(sourceImage);
 
             for (var i = 0; i < result.Height - 1; i++)
             {
-                if (result.GetPixel(0, i).Equals(Color.FromArgb(255,0,0,0)))
-                    FloodPixels(new Point(0, i), result);
+                if (result.GetPixel(0, i).Equals(Color.FromArgb(255, 0, 0, 0)))
+                    FloodPoints(new Point(0, i), result);
 
                 if (result.GetPixel(result.Width - 1, i).Equals(Color.FromArgb(255, 0, 0, 0)))
-                    FloodPixels(new Point(result.Width - 1, i), result);
+                    FloodPoints(new Point(result.Width - 1, i), result);
             }
 
             for (var i = 0; i < result.Width - 1; i++)
             {
-                if (result.GetPixel(i, 0).Equals(Color.FromArgb(255, 0, 0, 0))) FloodPixels(new Point(i, 0), result);
+                if (result.GetPixel(i, 0).Equals(Color.FromArgb(255, 0, 0, 0)))
+                    FloodPoints(new Point(i, 0), result);
 
                 if (result.GetPixel(i, result.Height - 1).Equals(Color.FromArgb(255, 0, 0, 0)))
-                    FloodPixels(new Point(i, result.Height - 1), result);
+                    FloodPoints(new Point(i, result.Height - 1), result);
             }
 
             for (var i = 0; i < result.Height - 1; i++)
@@ -572,42 +502,46 @@ namespace ImageProcessingApp
                 if (result.GetPixel(j, i).Equals(Color.FromArgb(255, 0, 255, 0)))
                     result.SetPixel(j, i, Color.Black);
                 else if (result.GetPixel(j, i).Equals(Color.FromArgb(255, 0, 0, 0))) result.SetPixel(j, i, Color.White);
-            
+
             return result;
         }
 
-        private static void FloodPixels(Point startingPoint, Bitmap image)
+        private static void FloodPoints(Point startingPoint, Bitmap image)
         {
-            image.SetPixel(startingPoint.X, startingPoint.Y, Color.FromArgb(255,0,255,0));
-            var queue = new Queue<Point>();
-            queue.Enqueue(startingPoint);
+            image.SetPixel(startingPoint.X, startingPoint.Y, Color.FromArgb(255, 0, 255, 0));
+            var pendingPoints = new Queue<Point>();
+            pendingPoints.Enqueue(startingPoint);
 
-            while (queue.Count > 0)
+            while (pendingPoints.Count > 0)
             {
-                var newPoint = queue.Dequeue();
-
-                if (newPoint.X > 0 && image.GetPixel(newPoint.X - 1, newPoint.Y).Equals(Color.FromArgb(255, 0, 0, 0)))
+                var currentPoint = pendingPoints.Dequeue();
+                
+                if (currentPoint.Y > 0 &&
+                    image.GetPixel(currentPoint.X, currentPoint.Y - 1).Equals(Color.FromArgb(255, 0, 0, 0)))
                 {
-                    image.SetPixel(newPoint.X - 1, newPoint.Y, Color.FromArgb(255, 0, 255, 0));
-                    queue.Enqueue(new Point(newPoint.X - 1, newPoint.Y));
+                    image.SetPixel(currentPoint.X, currentPoint.Y - 1, Color.FromArgb(255, 0, 255, 0));
+                    pendingPoints.Enqueue(new Point(currentPoint.X, currentPoint.Y - 1));
                 }
 
-                if (newPoint.X + 1 < image.Width - 1 && image.GetPixel(newPoint.X + 1, newPoint.Y).Equals(Color.FromArgb(255, 0, 0, 0)))
+                if (currentPoint.Y + 1 < image.Height - 1 &&
+                    image.GetPixel(currentPoint.X, currentPoint.Y + 1).Equals(Color.FromArgb(255, 0, 0, 0)))
                 {
-                    image.SetPixel(newPoint.X + 1, newPoint.Y, Color.FromArgb(255, 0, 255, 0));
-                    queue.Enqueue(new Point(newPoint.X + 1, newPoint.Y));
+                    image.SetPixel(currentPoint.X, currentPoint.Y + 1, Color.FromArgb(255, 0, 255, 0));
+                    pendingPoints.Enqueue(new Point(currentPoint.X, currentPoint.Y + 1));
                 }
 
-                if (newPoint.Y > 0 && image.GetPixel(newPoint.X, newPoint.Y - 1).Equals(Color.FromArgb(255, 0, 0, 0)))
+                if (currentPoint.X > 0 &&
+                    image.GetPixel(currentPoint.X - 1, currentPoint.Y).Equals(Color.FromArgb(255, 0, 0, 0)))
                 {
-                    image.SetPixel(newPoint.X, newPoint.Y - 1, Color.FromArgb(255, 0, 255, 0));
-                    queue.Enqueue(new Point(newPoint.X , newPoint.Y - 1));
+                    image.SetPixel(currentPoint.X - 1, currentPoint.Y, Color.FromArgb(255, 0, 255, 0));
+                    pendingPoints.Enqueue(new Point(currentPoint.X - 1, currentPoint.Y));
                 }
 
-                if (newPoint.Y + 1 < image.Height - 1 && image.GetPixel(newPoint.X, newPoint.Y + 1).Equals(Color.FromArgb(255, 0, 0, 0)))
+                if (currentPoint.X + 1 < image.Width - 1 &&
+                    image.GetPixel(currentPoint.X + 1, currentPoint.Y).Equals(Color.FromArgb(255, 0, 0, 0)))
                 {
-                    image.SetPixel(newPoint.X, newPoint.Y + 1, Color.FromArgb(255, 0, 255, 0));
-                    queue.Enqueue(new Point(newPoint.X, newPoint.Y + 1));
+                    image.SetPixel(currentPoint.X + 1, currentPoint.Y, Color.FromArgb(255, 0, 255, 0));
+                    pendingPoints.Enqueue(new Point(currentPoint.X + 1, currentPoint.Y));
                 }
             }
         }

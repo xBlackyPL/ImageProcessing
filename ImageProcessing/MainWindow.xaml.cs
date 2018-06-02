@@ -236,7 +236,7 @@ namespace ImageProcessingApp
 
         private static void AllowsOnlyNumeric(object sender, TextCompositionEventArgs textCompositionEventArgs)
         {
-            var regex = new Regex("[^0-9\\.,]+");
+            var regex = new Regex("[^0-9,]+");
             textCompositionEventArgs.Handled = regex.IsMatch(textCompositionEventArgs.Text);
         }
 

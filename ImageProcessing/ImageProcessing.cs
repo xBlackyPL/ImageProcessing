@@ -496,7 +496,7 @@ namespace ImageProcessingApp
                 if (result.GetPixel(i, result.Height - 1).Equals(Color.FromArgb(255, 0, 0, 0)))
                     FloodPoints(new Point(i, result.Height - 1), result);
             }
-
+    
             for (var i = 0; i < result.Height - 1; i++)
             for (var j = 0; j < result.Width - 1; j++)
                 if (result.GetPixel(j, i).Equals(Color.FromArgb(255, 0, 255, 0)))

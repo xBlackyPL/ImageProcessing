@@ -5,10 +5,12 @@ using System.Linq;
 
 namespace ImageProcessingApp
 {
-    internal class ImageProcessing
+    internal static class ImageProcessing
     {
         public static bool MonochromaticValidation(Bitmap sourceImage)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+
             for (var i = 0; i < sourceImage.Height - 1; i++)
             for (var j = 0; j < sourceImage.Width - 1; j++)
             {
@@ -23,6 +25,8 @@ namespace ImageProcessingApp
 
         public static Bitmap Monochromatic(Bitmap sourceImage)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
 
             for (var i = 0; i < sourceImage.Height - 1; i++)
@@ -39,7 +43,10 @@ namespace ImageProcessingApp
 
         public static Bitmap CopyImage(Bitmap sourceImage)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
+
             for (var i = 0; i < sourceImage.Height - 1; i++)
             for (var j = 0; j < sourceImage.Width - 1; j++)
                 result.SetPixel(j, i, sourceImage.GetPixel(j, i));
@@ -49,6 +56,9 @@ namespace ImageProcessingApp
 
         public static int[] GetImageHistogram(Bitmap sourceImage, char layer)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+            if (layer <= 0) throw new ArgumentOutOfRangeException(nameof(layer));
+
             var histogram = new int[256];
             for (var i = 0; i < sourceImage.Height; i++)
             for (var j = 0; j < sourceImage.Width; j++)
@@ -80,6 +90,9 @@ namespace ImageProcessingApp
 
         private static double[] GetHistogramCumulant(int[] sourceHistogram, double normalization)
         {
+            if (sourceHistogram == null) throw new ArgumentNullException(nameof(sourceHistogram));
+            if (normalization <= 0) throw new ArgumentOutOfRangeException(nameof(normalization));
+
             var histogramCumulant = new double[256];
             histogramCumulant[0] = sourceHistogram[0];
 
@@ -94,6 +107,7 @@ namespace ImageProcessingApp
 
         private static double[] GaussValuesPerColor(double stdDeviation)
         {
+            if (stdDeviation <= 0) throw new ArgumentOutOfRangeException(nameof(stdDeviation));
             var gaussValues = new double[256];
 
             for (var i = 0; i < 256; i++)
@@ -107,6 +121,10 @@ namespace ImageProcessingApp
         public static Bitmap ImageHistogramGaussNormalizationMonochromatic(Bitmap sourceImage, double stdDeviation,
             int numberOfColorClasses)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+            if (stdDeviation <= 0) throw new ArgumentOutOfRangeException(nameof(stdDeviation));
+            if (numberOfColorClasses <= 0) throw new ArgumentOutOfRangeException(nameof(numberOfColorClasses));
+
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
             double pixels = sourceImage.Width * sourceImage.Height;
             var gaussValuesForEachColor = GaussValuesPerColor(stdDeviation);
@@ -151,6 +169,10 @@ namespace ImageProcessingApp
         public static Bitmap ImageHistogramGaussianNormalizationRGB(Bitmap sourceImage, double stdDeviation,
             int numberOfColorClasses)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+            if (stdDeviation <= 0) throw new ArgumentOutOfRangeException(nameof(stdDeviation));
+            if (numberOfColorClasses <= 0) throw new ArgumentOutOfRangeException(nameof(numberOfColorClasses));
+
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
             double pixels = sourceImage.Width * sourceImage.Height;
             var gaussValuesForEachColor = GaussValuesPerColor(stdDeviation);
@@ -206,6 +228,10 @@ namespace ImageProcessingApp
         private static int[] newPixelValuesHistogramEqualization(int numberOfColorClasses, double[] classBorder,
             double[] sourceHistogramCumulant)
         {
+            if (classBorder == null) throw new ArgumentNullException(nameof(classBorder));
+            if (sourceHistogramCumulant == null) throw new ArgumentNullException(nameof(sourceHistogramCumulant));
+            if (numberOfColorClasses <= 0) throw new ArgumentOutOfRangeException(nameof(numberOfColorClasses));
+
             var index = 0;
             var newPixelValues = new int[sourceHistogramCumulant.Length];
 
@@ -229,6 +255,10 @@ namespace ImageProcessingApp
 
         public static Bitmap ImageOrdfilt2Monochromatic(Bitmap sourceImage, int maskSize, int orderNumber)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+            if (maskSize <= 0) throw new ArgumentOutOfRangeException(nameof(maskSize));
+            if (orderNumber <= 0) throw new ArgumentOutOfRangeException(nameof(orderNumber));
+
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
 
             for (var i = 0; i < sourceImage.Height - 1; i++)
@@ -243,6 +273,10 @@ namespace ImageProcessingApp
 
         public static Bitmap ImageOrdfilt2RBG(Bitmap sourceImage, int maskSize, int orderNumber)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+            if (maskSize <= 0) throw new ArgumentOutOfRangeException(nameof(maskSize));
+            if (orderNumber <= 0) throw new ArgumentOutOfRangeException(nameof(orderNumber));
+
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
 
             for (var i = 0; i < sourceImage.Height - 1; i++)
@@ -258,6 +292,10 @@ namespace ImageProcessingApp
         private static Color Ordfilt2GetColorMonochromatic(Bitmap sourceImage, int maskSize, int orderNumber,
             Point startingPoint)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+            if (maskSize <= 0) throw new ArgumentOutOfRangeException(nameof(maskSize));
+            if (orderNumber <= 0) throw new ArgumentOutOfRangeException(nameof(orderNumber));
+
             var colorValues = new List<int>();
 
             for (var i = startingPoint.Y; i < startingPoint.Y + maskSize; i++)
@@ -292,6 +330,10 @@ namespace ImageProcessingApp
 
         private static Color Ordfilt2GetColorRGB(Bitmap sourceImage, int maskSize, int orderNumber, Point startingPoint)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+            if (maskSize <= 0) throw new ArgumentOutOfRangeException(nameof(maskSize));
+            if (orderNumber <= 0) throw new ArgumentOutOfRangeException(nameof(orderNumber));
+
             var colorValuesR = new List<int>();
             var colorValuesG = new List<int>();
             var colorValuesB = new List<int>();
@@ -333,6 +375,10 @@ namespace ImageProcessingApp
 
         public static Bitmap ImageOpeningByLineStructuralElement(Bitmap sourceImage, int angle, int size)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+            if (angle <= 0) throw new ArgumentOutOfRangeException(nameof(angle));
+            if (size <= 0) throw new ArgumentOutOfRangeException(nameof(size));
+
             var structElement = LineStructuralElementGenerator(angle, size);
             var result = ImageDilate(ImageErode(sourceImage, structElement), structElement);
             return result;
@@ -340,6 +386,9 @@ namespace ImageProcessingApp
 
         private static int[][] LineStructuralElementGenerator(int angle, int structuralElementSize)
         {
+            if (angle <= 0) throw new ArgumentOutOfRangeException(nameof(angle));
+            if (structuralElementSize <= 0) throw new ArgumentOutOfRangeException(nameof(structuralElementSize));
+
             angle %= 180;
             var above90Deg = angle > 90;
             angle %= 91;
@@ -410,6 +459,9 @@ namespace ImageProcessingApp
 
         public static Bitmap ImageErode(Bitmap sourceImage, int[][] structuralElement)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+            if (structuralElement == null) throw new ArgumentNullException(nameof(structuralElement));
+
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
             var rows = structuralElement.Length;
             var columns = structuralElement[0].Length;
@@ -423,6 +475,9 @@ namespace ImageProcessingApp
 
         public static Bitmap ImageDilate(Bitmap sourceImage, int[][] structuralElement)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+            if (structuralElement == null) throw new ArgumentNullException(nameof(structuralElement));
+
             var result = new Bitmap(sourceImage.Width, sourceImage.Height);
 
             var rows = structuralElement.Length;
@@ -437,7 +492,11 @@ namespace ImageProcessingApp
 
         private static Color ImageErodeGetPixelValue(Bitmap sourceImage, int[][] mask, Point startingPoint)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+            if (mask == null) throw new ArgumentNullException(nameof(mask));
+
             var pixelValues = new List<int>();
+
             var rows = mask.Length;
             var columns = mask.First().Length;
 
@@ -458,6 +517,9 @@ namespace ImageProcessingApp
         private static Color ImageDilateGetPixelValue(Bitmap sourceImage, int[][] mask,
             Point startingPoint)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+            if (mask == null) throw new ArgumentNullException(nameof(mask));
+
             var pixelValues = new List<int>();
             var rows = mask.Length;
             var columns = mask.First().Length;
@@ -477,26 +539,28 @@ namespace ImageProcessingApp
 
         public static Bitmap ImageFillHoles(Bitmap sourceImage)
         {
+            if (sourceImage == null) throw new ArgumentNullException(nameof(sourceImage));
+
             var result = CopyImage(sourceImage);
 
             for (var i = 0; i < result.Height - 1; i++)
             {
                 if (result.GetPixel(0, i).Equals(Color.FromArgb(255, 0, 0, 0)))
-                    FloodPoints(new Point(0, i), result);
+                    FloodPoints(result, new Point(0, i));
 
                 if (result.GetPixel(result.Width - 1, i).Equals(Color.FromArgb(255, 0, 0, 0)))
-                    FloodPoints(new Point(result.Width - 1, i), result);
+                    FloodPoints(result, new Point(result.Width - 1, i));
             }
 
             for (var i = 0; i < result.Width - 1; i++)
             {
                 if (result.GetPixel(i, 0).Equals(Color.FromArgb(255, 0, 0, 0)))
-                    FloodPoints(new Point(i, 0), result);
+                    FloodPoints(result, new Point(i, 0));
 
                 if (result.GetPixel(i, result.Height - 1).Equals(Color.FromArgb(255, 0, 0, 0)))
-                    FloodPoints(new Point(i, result.Height - 1), result);
+                    FloodPoints(result, new Point(i, result.Height - 1));
             }
-    
+
             for (var i = 0; i < result.Height - 1; i++)
             for (var j = 0; j < result.Width - 1; j++)
                 if (result.GetPixel(j, i).Equals(Color.FromArgb(255, 0, 255, 0)))
@@ -506,8 +570,10 @@ namespace ImageProcessingApp
             return result;
         }
 
-        private static void FloodPoints(Point startingPoint, Bitmap image)
+        private static void FloodPoints(Bitmap image, Point startingPoint)
         {
+            if (image == null) throw new ArgumentNullException(nameof(image));
+
             image.SetPixel(startingPoint.X, startingPoint.Y, Color.FromArgb(255, 0, 255, 0));
             var pendingPoints = new Queue<Point>();
             pendingPoints.Enqueue(startingPoint);
@@ -515,7 +581,7 @@ namespace ImageProcessingApp
             while (pendingPoints.Count > 0)
             {
                 var currentPoint = pendingPoints.Dequeue();
-                
+
                 if (currentPoint.Y > 0 &&
                     image.GetPixel(currentPoint.X, currentPoint.Y - 1).Equals(Color.FromArgb(255, 0, 0, 0)))
                 {

@@ -255,6 +255,7 @@ namespace ImageProcessingApp
                                 stdDeviation,
                                 8);
                         Img.Source = Convert(result);
+                        _currentActiveImage = result;
                     }
                     else
                     {
@@ -262,6 +263,7 @@ namespace ImageProcessingApp
                             ImageProcessing.ImageHistogramGaussianNormalizationRGB(_currentActiveImage, stdDeviation,
                                 8);
                         Img.Source = Convert(result);
+                        _currentActiveImage = result;
                     }
 
                     break;
